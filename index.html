@@ -73,6 +73,8 @@ input::placeholder{color:#a99d93}
 .cup{flex:none;align-self:center;font-size:12px;font-weight:700;color:var(--on);opacity:.85}
 .champ{flex:none;text-align:center;background:var(--gold);color:var(--ink);border:3px solid var(--ink);border-radius:16px;padding:10px;box-shadow:0 6px 0 rgba(0,0,0,.25)}.champ b{display:block;font:400 26px var(--fn)}.champ span{font-size:12px;font-weight:700}
 .upd{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);z-index:200;background:var(--gold);color:var(--ink);border:2px solid var(--ink);border-radius:999px;padding:8px 16px;font-weight:700;font-size:13px;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+.sheet{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;padding:16px}
+.sheetin{width:min(420px,100%);background:var(--pn);color:var(--ink);border-radius:20px;padding:16px;display:grid;gap:10px;margin-bottom:env(safe-area-inset-bottom)}.sheetin b{text-align:center}
 .pickn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .cw{display:flex;flex-direction:column;gap:6px;min-height:0}
 .tag{flex:none;font-size:12px;font-weight:700;color:var(--on);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -171,7 +173,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-21c"; // 新しい版を出したら変える
+const VER="2026-11-21d"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -212,6 +214,7 @@ let left_=false;
 let myRole="player"; // 部屋の中で「対戦」「審判」を切り替える
 function setRole(r){myRole=r;const b=$("rl");if(b)b.textContent=r==="judge"?"審判中":"対戦中";toast(r==="judge"?"審判になりました":"対戦者になりました");hello()}
 function enterRoom(rm,ord){
+  if(q.get("as")==="judge"&&!ord)myRole="judge"; // 審判用の招待リンクから来た人は審判で入る
   if(needName())return;
   me=$("nm").value.trim().slice(0,12);room=rm;if(!room){$("rc").focus();return}
   store.set("tsy-name",me);stopMatch();
@@ -228,7 +231,12 @@ function enterRoom(rm,ord){
   };
   if($("ai"))$("ai").onclick=()=>setAi(!aiOn);
   if(store.get("tsy-owner")&&store.get("tsy-ai-"+room)==="1")setTimeout(()=>setAi(true),1500);
-  $("cp").onclick=async()=>{const u=location.origin+location.pathname+"?r="+room;try{await navigator.clipboard.writeText(u);toast("招待リンクをコピーしました")}catch(_){toast(u)}};
+  $("cp").onclick=()=>{ // 招待：対戦者として／審判として、の2種類のリンク
+    const base=location.origin+location.pathname+"?r="+room,d=document.createElement("div");d.className="sheet";
+    d.innerHTML=`<div class="sheetin"><b>招待リンクをコピー</b><button class="big pri" data-u="${base}">対戦者として招待</button><button class="big sec" data-u="${base}&as=judge">審判として招待</button><button class="big ghost" data-x>閉じる</button></div>`;
+    d.onclick=async e=>{const b=e.target.closest("button");if(!b&&e.target!==d)return;if(b&&b.dataset.u){try{await navigator.clipboard.writeText(b.dataset.u);toast(b.textContent+"のリンクをコピーしました")}catch(_){prompt("このリンクを送ってください",b.dataset.u)}}d.remove()};
+    document.body.appendChild(d);
+  };
   addEventListener("pagehide",()=>{if(left_)return;try{navigator.sendBeacon(RELAY+"tsyoi-"+room,JSON.stringify({t:"leave",r:R,id:myId,name:me}))}catch(e){}});
   connect();setInterval(hello,12000);setInterval(render,5000);render();
 }
