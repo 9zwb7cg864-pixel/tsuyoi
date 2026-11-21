@@ -69,6 +69,8 @@ input::placeholder{color:#a99d93}
 @media(min-width:900px){.cards.multi{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .others{flex:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px}
 .others .pbar{padding:6px 8px;gap:6px}.others .av{width:30px;height:30px}.others .stack{font-size:16px}
+.cup{flex:none;align-self:center;font-size:12px;font-weight:700;color:var(--on);opacity:.85}
+.champ{flex:none;text-align:center;background:var(--gold);color:var(--ink);border:3px solid var(--ink);border-radius:16px;padding:10px;box-shadow:0 6px 0 rgba(0,0,0,.25)}.champ b{display:block;font:400 26px var(--fn)}.champ span{font-size:12px;font-weight:700}
 .pickn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .cw{display:flex;flex-direction:column;gap:6px;min-height:0}
 .tag{flex:none;font-size:12px;font-weight:700;color:var(--on);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -149,7 +151,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       <div class="lbl">遊び方</div>
       <ul class="rules">
         <li><i>1</i><span>全員が記事を引く。気に入らなければ引き直し（10回まで。前の記事には戻れない）</span></li>
-        <li><i>2</i><span>全員が決めたら、ほかの人の記事が見えないまま順番に賭ける。チップは1000枚、毎回50枚の参加料。チェック・ベット・コール・レイズ・フォールド、ブラフもあり</span></li>
+        <li><i>2</i><span>全員が決めたら、ほかの人の記事が見えないまま順番に賭ける。チップは1000枚、毎回50枚の参加料。0枚になったら脱落、最後の1人が優勝（勝ち抜け）。チェック・ベット・コール・レイズ・フォールド、ブラフもあり</span></li>
         <li><i>3</i><span>賭けが決まったら、審判が名前を伏せた記事からいちばん強そうなものを選ぶ。勝った人がポットを取る</span></li>
       </ul>
     </div>
@@ -320,7 +322,8 @@ function order(){ // 来た順。抜けた人は外す
 }
 function seats(){ // 対戦者：審判を選んでいない人を、来た順に最大6人
   if(fixedOrder.length===3)return fixedOrder.slice(0,2);
-  return order().filter(i=>players.get(i).role!=="judge"&&!i.startsWith("ai-")).slice(0,MAXP);
+  const out=history_(null).busted; // 脱落した人は、この大会が終わるまで座れない
+  return order().filter(i=>players.get(i).role!=="judge"&&!i.startsWith("ai-")&&!out.has(i)).slice(0,MAXP);
 }
 const judgeId=()=>{
   if(fixedOrder.length===3&&!order().some(i=>i.startsWith("ai-")&&online(i)))return fixedOrder[2];
@@ -328,9 +331,9 @@ const judgeId=()=>{
   return c.find(i=>i.startsWith("ai-")&&online(i))||c.find(i=>online(i))||c[0];
 };
 // その戦に出る人：賭けが始まったら記事を決めた人で固定。始まる前は今の席の人
-function roster(r){const x=R_(r);const s=seats();
+function roster(r){const x=R_(r);
   if(x.acts.length||r<R){const o=[...order(),...Object.keys(x.picks)];return [...new Set(o)].filter(i=>x.picks[i])}
-  return s}
+  return seats()}
 const allPicked=r=>{const x=R_(r),ro=roster(r);return ro.length>=2&&ro.every(i=>x.picks[i])};
 
 async function draw(){
@@ -393,17 +396,20 @@ function outcome(r,ro,j,st){
   const d=settle(ro,b.c,v);
   return{w:v,d,gain:d[v],how:"審判 "+esc((players.get(vid)||{}).name||"?")+" さんの判定"};
 }
-function history_(j){ // R戦の始まりまでのチップと勝ち数（初めて出る人は1000枚から）
-  let st={};const wins={};const S=i=>{if(st[i]==null)st[i]=START};
+function history_(j){ // R戦の始まりまでのチップと勝ち数。勝ち抜け：0枚になったら脱落、最後の1人で優勝して次の大会へ
+  let st={};const wins={},champs={};let cup=1;const S=i=>{if(st[i]==null)st[i]=START};
   for(let r=1;r<=R;r++){
-    if(rounds[r]&&rounds[r].reset)st={};
+    if(rounds[r]&&rounds[r].reset){st={};cup++}
     if(r===R)break;
     const x=rounds[r];if(!x)continue;
     const ro=roster(r);ro.forEach(S);
     const z=outcome(r,ro,j,st);if(!z)continue;
     wins[z.w]=(wins[z.w]||0)+1;ro.forEach(i=>st[i]+=z.d[i]);
+    const ks=Object.keys(st),alive=ks.filter(i=>st[i]>0);
+    if(ks.length>=2&&alive.length===1){champs[alive[0]]=(champs[alive[0]]||0)+1;st={};cup++}
   }
-  return{st:new Proxy(st,{get:(o,k)=>o[k]==null?START:o[k]}),wins};
+  const busted=new Set(Object.keys(st).filter(i=>st[i]<=0));
+  return{st:new Proxy(st,{get:(o,k)=>o[k]==null?START:o[k]}),raw:st,wins,champs,cup,busted};
 }
 const blindOrder=(ids)=>{const h=s=>{let v=0;for(const ch of s+":"+R)v=(v*131+ch.charCodeAt(0))>>>0;return v};return [...ids].sort((a,b)=>h(a)-h(b))};
 const LAB="ABCDEF";
@@ -425,6 +431,7 @@ function render(){
     return paint(g,h);
   }
   const H=history_(J),wins=H.wins,st=H.st;
+  const cupTag=`<div class="cup">第${H.cup}大会　残り${Object.keys(H.raw).length?Object.keys(H.raw).filter(i=>H.raw[i]>0).length:ro.length}人</div>`;
   const both=allPicked(R),B=both?betState(R,ro,st):null;
   const Z=B&&B.done?outcome(R,ro,J,st):null;
   const left=i=>Z?st[i]+Z.d[i]:B?st[i]-B.c[i]:st[i];
@@ -441,6 +448,7 @@ function render(){
   h+=others.length>1?`<div class="others">${others.map(bar).join("")}</div>`:bar(others[0]);
   h+=`<div class="mid">`;
   if(isJ)h+=`<div class="judge">あなたは審判です</div>`;
+  h+=cupTag;
   if(both){
     h+=`<div class="potrow"><div class="pot"><span class="chips"><span class="chip" style="top:6px"></span><span class="chip" style="top:2px"></span><span class="chip" style="top:-2px"></span></span>${B.pot}</div></div>`;
     if(B.log.length)h+=`<div class="log">${B.log.slice(-3).map(([i,t])=>nm(i)+"："+t).join("　→　")}</div>`;
@@ -456,7 +464,7 @@ function render(){
           :`<button class="big pri" id="bd" ${local.busy?"disabled":""}>${local.busy?"引いています…":"1枚目を引く"}</button>`;
       }else dock=`<div class="msg">決定しました。${waitNames} さんを待っています</div>`;
     }else{
-      h+=`<div class="empty"><div><b>${isJ?ro.length+"人が記事を選んでいます":"観戦中"}</b>${isJ?"全員が決めて賭けが終わると、名前を伏せた記事が出ます":"今の戦が終わると、次の戦から入れます"}</div></div>`;
+      h+=`<div class="empty"><div><b>${isJ?ro.length+"人が記事を選んでいます":H.busted.has(myId)?"脱落しました":"観戦中"}</b>${isJ?"全員が決めて賭けが終わると、名前を伏せた記事が出ます":H.busted.has(myId)?"この大会が終わるまで観戦です。優勝者が決まったら、次の大会から入れます":"今の戦が終わると、次の戦から入れます"}</div></div>`;
     }
   }else if(!B.done){
     if(isP){
@@ -490,8 +498,12 @@ function render(){
       else if(isJ)dock=`<div class="msg">名前は伏せてあります。いちばん強そうなものを選んでください</div><div class="${ord.length>2?"pickn":"two"}">${ord.map((i,k)=>`<button class="big pri" data-v="${i}">${LAB[k]} が強そう</button>`).join("")}</div>`;
       else dock=`<div class="msg">${J?"審判の判定を待っています":"審判がいません。だれかが「対戦中」を押して審判になるか、AI審判を入れてください"}</div>`;
     }else{
-      const broke=ro.some(i=>left(i)<ANTE);
-      dock=broke&&(isP||isJ)?`<div class="msg">チップが尽きた人がいます</div><div class="two"><button class="big ghost" id="nx">このまま次へ</button><button class="big pri" id="rs">全員配り直して次へ</button></div>`:`<button class="big pri" id="nx">もう一局</button>`;
+      const after={};Object.keys(H.raw).forEach(i=>after[i]=H.raw[i]);ro.forEach(i=>after[i]=left(i));
+      const ks=Object.keys(after),alive=ks.filter(i=>after[i]>0),out=ro.filter(i=>left(i)<=0);
+      if(ks.length>=2&&alive.length===1){
+        h=h.replace('<div class="cards','<div class="champ"><b>🏆 '+nm(alive[0])+' 優勝！</b><span>第'+H.cup+'大会　'+((H.champs[alive[0]]||0)+1)+'回目の優勝</span></div><div class="cards');
+        dock=`<button class="big pri" id="nx">次の大会を始める（全員${START}枚）</button>`;
+      }else dock=(out.length?`<div class="msg">${out.map(nm).join("・")} さんが脱落しました</div>`:"")+`<button class="big pri" id="nx">もう一局</button>`;
     }
   }
   h+=`</div>`;
