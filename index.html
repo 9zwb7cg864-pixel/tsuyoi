@@ -169,6 +169,9 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 let myId=store.get("tsy-id"); // 端末に保存して、閉じても同じ人として入り直せるようにする
 if(!myId){myId=Math.random().toString(36).slice(2,10);store.set("tsy-id",myId)}
+if(location.hash==="#owner"){const t=prompt("AI審判の合言葉を入れてください");if(t)store.set("tsy-owner",t.trim());history.replaceState(null,"",location.pathname+location.search)}
+let aiOn=false,aiRunning=null; // AI審判（持ち主の端末だけ。合言葉は端末に保存）
+const JUDGE_URL="https://tsuyoi-judge.9zwb7cg864.workers.dev/";
 const q=new URLSearchParams(location.search);
 $("nm").value=store.get("tsy-name")||"";
 $("rc").value=q.get("r")||String(Math.floor(1000+Math.random()*9000));
@@ -199,8 +202,9 @@ function enterRoom(rm,ord){
   for(const i of fixedOrder)if(!players.has(i))players.set(i,{name:(want.get(i)||{}).name||"入室待ち",first:0,last:0});
   try{history.replaceState(null,"","?r="+room+(fixedOrder.length===3?"&o="+fixedOrder.join("."):""))}catch(e){}
   $("home").classList.add("hide");$("game").classList.remove("hide");$("peek").classList.remove("hide");$("peek").onclick=()=>setChat(true);$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
-  $("topr").innerHTML=`<button class="icbtn" id="rl">役職：${myRole==="judge"?"審判":"対戦"}</button><button class="icbtn" id="cp">招待</button><button class="icbtn" id="co">チャット<span class="badge hide" id="ub"></span></button>`;
+  $("topr").innerHTML=`<button class="icbtn" id="rl">役職：${myRole==="judge"?"審判":"対戦"}</button>${store.get("tsy-owner")?`<button class="icbtn" id="ai">AI審判：${aiOn?"ON":"OFF"}</button>`:""}<button class="icbtn" id="cp">招待</button><button class="icbtn" id="co">チャット<span class="badge hide" id="ub"></span></button>`;
   $("rl").onclick=()=>setRole(myRole==="judge"?"player":"judge");
+  if($("ai"))$("ai").onclick=()=>{aiOn=!aiOn;$("ai").textContent="AI審判："+(aiOn?"ON":"OFF");render()};
   $("cp").onclick=async()=>{const u=location.origin+location.pathname+"?r="+room;try{await navigator.clipboard.writeText(u);toast("招待リンクをコピーしました")}catch(_){toast(u)}};
   $("co").onclick=()=>setChat(!chatOpen);
   addEventListener("pagehide",()=>{try{navigator.sendBeacon(RELAY+"tsyoi-"+room,JSON.stringify({t:"leave",r:R,id:myId,name:me}))}catch(e){}});
@@ -247,6 +251,19 @@ function lcheck(){
     if(Math.random()<.5)pl.reverse();
     lpost({t:"match",room:String(Math.floor(100000+Math.random()*900000)),ids:[...pl,j]});
   }
+}
+
+async function aiJudge(ord,picks){ // 持ち主の端末でGeminiに判定してもらい、審判の票として送る
+  const key=R+":"+ord.join();if(aiRunning===key)return;aiRunning=key;
+  const a=picks[ord[0]]||{},b=picks[ord[1]]||{};
+  try{
+    const res=await fetch(JUDGE_URL,{method:"POST",body:JSON.stringify({token:store.get("tsy-owner"),a:{title:a.title,extract:a.ext},b:{title:b.title,extract:b.ext}})});
+    const d=await res.json().catch(()=>({}));
+    if(!res.ok){toast(d.error==="limit"?"AI審判は今日の分が終わりました":"AI審判がうまく動きませんでした");aiOn=false;render();return}
+    const w=d.winner==="B"?ord[1]:ord[0];
+    R_(R).votes[myId]=w;send({t:"vote",r:R,for:w});send({t:"chat",r:R,text:"AI審判："+d.reason});render();
+  }catch(e){toast("AI審判に接続できませんでした");aiOn=false;render()}
+  finally{aiRunning=null}
 }
 
 function connect(){
@@ -429,7 +446,8 @@ function render(){
     h+=`<div class="cards duo">`+ord.map((i,k)=>{const lab="AB"[k];
       return `<div class="cw"><div class="tag">${blind?"記事 "+lab:lab+"："+nm(i)+(i===myId?"（あなた）":"")+"　"+(x.draws[i]||"?")+"回目"}</div>${card(x.picks[i],{win:Z&&Z.w===i})}</div>`}).join("")+`</div>`;
     if(!Z){
-      if(isJ)dock=`<div class="msg">名前は伏せてあります。強そうな方を選んでください</div><div class="two">${ord.map((i,k)=>`<button class="big pri" data-v="${i}">${"AB"[k]} が強そう</button>`).join("")}</div>`;
+      if(isJ&&aiOn&&store.get("tsy-owner")){dock=`<div class="msg">AI審判が判定中…</div>`;aiJudge(ord,x.picks)}
+      else if(isJ)dock=`<div class="msg">名前は伏せてあります。強そうな方を選んでください</div><div class="two">${ord.map((i,k)=>`<button class="big pri" data-v="${i}">${"AB"[k]} が強そう</button>`).join("")}</div>`;
       else dock=`<div class="msg">${J?"審判の判定を待っています":"審判（3人目）がまだいません。招待リンクで呼んでください"}</div>`;
     }else{
       const after={};s.forEach(i=>after[i]=left(i));const broke=s.some(i=>after[i]<ANTE);
