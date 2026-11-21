@@ -135,12 +135,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   <header class="top"><div class="logo"><b>ツヨペディア</b></div><div class="row" id="topr" style="display:flex;gap:6px;flex-wrap:nowrap"></div></header>
 
   <div class="home" id="home">
-    <div><h1 class="title">Wikipediaの記事で、<br>強さ勝負。</h1><p class="lead">ランダムに引いた記事で戦う3人用のゲーム。2〜6人が賭けて、審判（人かAI）が名前を伏せて判定します。</p></div>
+    <div><h1 class="title">Wikipediaの記事で、<br>強さ勝負。</h1><p class="lead">ランダムに引いた記事で戦うゲーム。2〜6人が賭けて、審判が名前を伏せて判定します。</p></div>
     <div class="box">
       <label class="lbl" for="nm">名前</label><input id="nm" maxlength="12" placeholder="名前を入れてください" autocomplete="nickname">
       <div class="two" id="btns"><button class="big pri" id="rm">ランダムマッチ</button><button class="big sec" id="fr">友だちと遊ぶ</button></div>
       <div class="hide" id="frbox" style="display:grid;gap:8px">
-        <label class="lbl" for="rc">部屋番号（同じ番号の人と対戦。3人目が審判）</label>
+        <label class="lbl" for="rc">部屋番号（同じ番号の人と対戦。2〜6人。審判は部屋の中で選ぶ）</label>
         <div style="display:flex;gap:8px"><input id="rc" maxlength="8" inputmode="numeric"><button class="big pri" id="enter" style="flex:none;padding:0 22px;min-height:48px">入る</button></div>
       </div>
       <div class="wait hide" id="rmw"><div class="seats" id="seats"></div><b id="rmn">探しています…</b><span class="lead">3人そろったら始まります。審判は3人の中からランダム。</span><button class="big ghost" id="rmc" style="min-height:44px;padding:0 24px">やめる</button></div>
@@ -148,9 +148,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     <div class="box">
       <div class="lbl">遊び方</div>
       <ul class="rules">
-        <li><i>1</i><span>2人とも記事を引く。気に入らなければ引き直し（10回まで。前の記事には戻れない）</span></li>
-        <li><i>2</i><span>2人とも決めたら、相手の記事が見えないまま賭ける。チップは1000枚、毎回50枚の参加料。チェック・ベット・コール・レイズ・フォールド、ブラフもあり</span></li>
-        <li><i>3</i><span>賭けが決まったら、審判が名前を伏せた2枚から強そうな方を選ぶ。勝った方がポットを取る</span></li>
+        <li><i>1</i><span>全員が記事を引く。気に入らなければ引き直し（10回まで。前の記事には戻れない）</span></li>
+        <li><i>2</i><span>全員が決めたら、ほかの人の記事が見えないまま順番に賭ける。チップは1000枚、毎回50枚の参加料。チェック・ベット・コール・レイズ・フォールド、ブラフもあり</span></li>
+        <li><i>3</i><span>賭けが決まったら、審判が名前を伏せた記事からいちばん強そうなものを選ぶ。勝った人がポットを取る</span></li>
       </ul>
     </div>
     <p class="foot">記事の文章と画像は <a href="https://ja.wikipedia.org/">ウィキペディア日本語版</a> より（<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ja">CC BY-SA 4.0</a>）。チャットは12時間で消えます。</p>
