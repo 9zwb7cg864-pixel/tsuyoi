@@ -185,7 +185,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-21h"; // 新しい版を出したら変える
+const VER="2026-11-21i"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -305,6 +305,8 @@ function setAi(on){
 }
 async function aiJudge(ord,picks){ // 持ち主の端末でGeminiに判定してもらい、審判の票として送る
   const key=R+":"+ord.join();if(aiRunning===key)return;aiRunning=key;
+  const r0=R;await new Promise(r=>setTimeout(r,5000)); // 記事が出てから少し間を置く（みんなが見比べる時間）
+  if(R!==r0||R_(R).votes[AI_ID]){aiRunning=null;return}
   const items=ord.map(i=>({title:(picks[i]||{}).title,extract:(picks[i]||{}).ext}));
   try{
     const res=await fetch(JUDGE_URL,{method:"POST",body:JSON.stringify({token:store.get("tsy-owner"),items})});
@@ -531,7 +533,7 @@ function render(){
       return `<div class="cw"><div class="tag">${blind?"記事 "+lab:lab+"："+nm(i)+(i===myId?"（あなた）":"")+"　"+(x.draws[i]||"?")+"回目"+(B.folded.has(i)?"（フォールド）":"")}</div>${card(x.picks[i],{win:Z&&Z.w===i})}</div>`}).join("")+`</div>`;
     if(!Z){
       if(aiOn&&J===AI_ID)aiJudge(ord,x.picks);
-      if(J&&J.startsWith("ai-"))dock=`<div class="msg">AI審判が判定中…</div>`;
+      if(J&&J.startsWith("ai-"))dock=`<div class="msg">AI審判が記事を読んでいます…</div>`;
       else if(isJ)dock=`<div class="msg">名前は伏せてあります。いちばん強そうなものを選んでください</div><div class="${ord.length>2?"pickn":"two"}">${ord.map((i,k)=>`<button class="big pri" data-v="${i}">${LAB[k]} が強そう</button>`).join("")}</div>`;
       else dock=`<div class="msg">${J?"審判の判定を待っています":"審判がいません。だれかが「対戦中」を押して審判になるか、AI審判を入れてください"}</div>`;
     }else{
