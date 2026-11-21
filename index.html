@@ -201,6 +201,7 @@ function toast(t){const d=document.createElement("div");d.className="toast";d.te
 $("fr").onclick=()=>{$("frbox").classList.toggle("hide");if(!$("frbox").classList.contains("hide"))$("rc").focus()};
 $("enter").onclick=()=>enterRoom($("rc").value.trim().replace(/\D/g,"").slice(0,8));
 function needName(){if($("nm").value.trim())return false;$("nm").focus();toast("先に名前を入れてください");return true}
+let left_=false;
 let myRole="player"; // 部屋の中で「対戦」「審判」を切り替える
 function setRole(r){myRole=r;const b=$("rl");if(b)b.textContent=r==="judge"?"審判中":"対戦中";toast(r==="judge"?"審判になりました":"対戦者になりました");hello()}
 function enterRoom(rm,ord){
@@ -211,12 +212,17 @@ function enterRoom(rm,ord){
   for(const i of fixedOrder)if(!players.has(i))players.set(i,{name:(want.get(i)||{}).name||"入室待ち",first:0,last:0});
   try{history.replaceState(null,"","?r="+room+(fixedOrder.length===3?"&o="+fixedOrder.join("."):""))}catch(e){}
   $("home").classList.add("hide");$("game").classList.remove("hide");$("peek").classList.remove("hide");$("peek").onclick=()=>setChat(true);$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
-  $("topr").innerHTML=`<button class="icbtn" id="rl">${myRole==="judge"?"審判中":"対戦中"}</button>${store.get("tsy-owner")?`<button class="icbtn" id="ai">${aiOn?"AIを外す":"AI審判"}</button>`:""}<button class="icbtn" id="cp">招待</button>`;
+  $("topr").innerHTML=`<button class="icbtn" id="rl">${myRole==="judge"?"審判中":"対戦中"}</button>${store.get("tsy-owner")?`<button class="icbtn" id="ai">${aiOn?"AIを外す":"AI審判"}</button>`:""}<button class="icbtn" id="cp">招待</button><button class="icbtn" id="lv">退室</button>`;
   $("rl").onclick=()=>setRole(myRole==="judge"?"player":"judge");
+  $("lv").onclick=async()=>{ // 退室：みんなに知らせてトップに戻る（AI審判を入れていたら一緒に外す）
+    if(!confirm("部屋から出ますか？"))return;
+    try{if(aiOn)await sendAs({t:"leave",r:R});await send({t:"leave",r:R})}catch(e){}
+    store.set("tsy-ai-"+room,"0");left_=true;location.href=location.pathname;
+  };
   if($("ai"))$("ai").onclick=()=>setAi(!aiOn);
   if(store.get("tsy-owner")&&store.get("tsy-ai-"+room)==="1")setTimeout(()=>setAi(true),1500);
   $("cp").onclick=async()=>{const u=location.origin+location.pathname+"?r="+room;try{await navigator.clipboard.writeText(u);toast("招待リンクをコピーしました")}catch(_){toast(u)}};
-  addEventListener("pagehide",()=>{try{navigator.sendBeacon(RELAY+"tsyoi-"+room,JSON.stringify({t:"leave",r:R,id:myId,name:me}))}catch(e){}});
+  addEventListener("pagehide",()=>{if(left_)return;try{navigator.sendBeacon(RELAY+"tsyoi-"+room,JSON.stringify({t:"leave",r:R,id:myId,name:me}))}catch(e){}});
   connect();setInterval(hello,12000);setInterval(render,5000);render();
 }
 function setChat(o){chatOpen=o;$("chat").classList.toggle("open",o);if(o){unread=0;badge();const l=$("log");l.scrollTop=l.scrollHeight;setTimeout(()=>$("ci").focus(),250)}}
