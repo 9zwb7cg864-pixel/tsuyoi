@@ -65,6 +65,11 @@ input::placeholder{color:#a99d93}
 .log{font-size:12px;color:var(--onsub);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cards{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
 .cards.duo{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cards.multi{grid-template-columns:repeat(2,minmax(0,1fr));overflow:auto;grid-auto-rows:minmax(230px,auto)}
+@media(min-width:900px){.cards.multi{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.others{flex:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px}
+.others .pbar{padding:6px 8px;gap:6px}.others .av{width:30px;height:30px}.others .stack{font-size:16px}
+.pickn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .cw{display:flex;flex-direction:column;gap:6px;min-height:0}
 .tag{flex:none;font-size:12px;font-weight:700;color:var(--on);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--card);color:var(--cink);border:3px solid var(--ink);border-radius:16px;overflow:hidden;box-shadow:0 8px 0 rgba(0,0,0,.28);animation:deal .35s ease-out}
@@ -130,7 +135,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   <header class="top"><div class="logo"><b>ツヨペディア</b></div><div class="row" id="topr" style="display:flex;gap:6px;flex-wrap:nowrap"></div></header>
 
   <div class="home" id="home">
-    <div><h1 class="title">Wikipediaの記事で、<br>強さ勝負。</h1><p class="lead">ランダムに引いた記事で戦う3人用のゲーム。2人が賭けて、1人が名前を伏せて判定します。</p></div>
+    <div><h1 class="title">Wikipediaの記事で、<br>強さ勝負。</h1><p class="lead">ランダムに引いた記事で戦う3人用のゲーム。2〜6人が賭けて、審判（人かAI）が名前を伏せて判定します。</p></div>
     <div class="box">
       <label class="lbl" for="nm">名前</label><input id="nm" maxlength="12" placeholder="名前を入れてください" autocomplete="nickname">
       <div class="two" id="btns"><button class="big pri" id="rm">ランダムマッチ</button><button class="big sec" id="fr">友だちと遊ぶ</button></div>
@@ -263,12 +268,12 @@ function setAi(on){
 }
 async function aiJudge(ord,picks){ // 持ち主の端末でGeminiに判定してもらい、審判の票として送る
   const key=R+":"+ord.join();if(aiRunning===key)return;aiRunning=key;
-  const a=picks[ord[0]]||{},b=picks[ord[1]]||{};
+  const items=ord.map(i=>({title:(picks[i]||{}).title,extract:(picks[i]||{}).ext}));
   try{
-    const res=await fetch(JUDGE_URL,{method:"POST",body:JSON.stringify({token:store.get("tsy-owner"),a:{title:a.title,extract:a.ext},b:{title:b.title,extract:b.ext}})});
+    const res=await fetch(JUDGE_URL,{method:"POST",body:JSON.stringify({token:store.get("tsy-owner"),items})});
     const d=await res.json().catch(()=>({}));
     if(!res.ok){toast(d.error==="limit"?"AI審判は今日の分が終わりました":"AI審判がうまく動きませんでした");setAi(false);return}
-    const w=d.winner==="B"?ord[1]:ord[0];
+    const k=LAB.indexOf(String(d.winner||"").trim().toUpperCase()),w=ord[k>=0&&k<ord.length?k:0];
     R_(R).votes[AI_ID]=w;await sendAs({t:"vote",r:R,for:w});sendAs({t:"chat",r:R,text:d.reason});render();
   }catch(e){toast("AI審判に接続できませんでした");setAi(false)}
   finally{aiRunning=null}
@@ -299,7 +304,7 @@ function handle(m,time){
   else if(m.t==="pick"&&m.a&&typeof m.a.title==="string"){R_(r).picks[m.id]=m.a;R_(r).draws[m.id]=Number(m.draws)||MAXDRAW}
   else if(m.t==="vote"&&typeof m.for==="string"){R_(r).votes[m.id]=m.for}
   else if(m.t==="act"&&typeof m.a==="string"){R_(r).acts.push({id:m.id,a:m.a,amt:Number(m.amt)||0})}
-  else if(m.t==="reset"){R_(r).reset=true;sysmsg(p.name+" さんがチップを配り直しました（2人とも"+START+"枚）")}
+  else if(m.t==="reset"){R_(r).reset=true;sysmsg(p.name+" さんがチップを配り直しました（全員"+START+"枚）")}
   else if(m.t==="next"&&r>R){R=r;sysmsg("第"+R+"戦スタート")}
   if(r>R&&m.t!=="hello")R=r;
   if(m.t==="join"&&m.id!==myId)sysmsg(p.name+" さんが入りました");
@@ -308,15 +313,25 @@ function handle(m,time){
 }
 
 let fixedOrder=(q.get("o")||"").split(".").filter(Boolean); // ランダムマッチで決まった役の順（対戦者2人、審判）
-function order(){ // 先に来た2人が対戦者、3人目が審判、4人目からは観戦（抜けた人は審判・観戦の列から外す）
-  if(fixedOrder.length===3){const rest=[...players.keys()].filter(i=>!fixedOrder.includes(i)&&!players.get(i).left).sort((a,b)=>players.get(a).first-players.get(b).first);return [...fixedOrder,...rest]}
-  const o=[...players.entries()].filter(([,p])=>Date.now()/1000-p.last<3*3600||p.left).sort((a,b)=>a[1].first-b[1].first).map(x=>x[0]);
-  const pl=o.filter(i=>players.get(i).role!=="judge"), jud=o.filter(i=>players.get(i).role==="judge"&&!players.get(i).left);
-  return [...pl.slice(0,2),...jud,...pl.slice(2).filter(i=>!players.get(i).left)]; // 審判志望の人が先に審判の席へ
-}
-const seats=()=>order().filter(i=>players.get(i).role!=="judge").slice(0,2);
-const judgeId=()=>{const c=order().filter(i=>!seats().includes(i));return c.find(i=>i.startsWith("ai-")&&online(i))||c.find(i=>online(i))||c[0]}; // AI審判がいれば優先 // 審判が抜けたら、次にいる人が審判
+const MAXP=6; // 1卓の対戦者は最大6人
 const online=id=>{const p=players.get(id);return p&&Date.now()/1000-p.last<40};
+function order(){ // 来た順。抜けた人は外す
+  return [...players.entries()].filter(([,p])=>!p.left&&Date.now()/1000-p.last<3*3600).sort((a,b)=>a[1].first-b[1].first).map(x=>x[0]);
+}
+function seats(){ // 対戦者：審判を選んでいない人を、来た順に最大6人
+  if(fixedOrder.length===3)return fixedOrder.slice(0,2);
+  return order().filter(i=>players.get(i).role!=="judge"&&!i.startsWith("ai-")).slice(0,MAXP);
+}
+const judgeId=()=>{
+  if(fixedOrder.length===3&&!order().some(i=>i.startsWith("ai-")&&online(i)))return fixedOrder[2];
+  const c=order().filter(i=>!seats().includes(i)&&(players.get(i).role==="judge"||i.startsWith("ai-")));
+  return c.find(i=>i.startsWith("ai-")&&online(i))||c.find(i=>online(i))||c[0];
+};
+// その戦に出る人：賭けが始まったら記事を決めた人で固定。始まる前は今の席の人
+function roster(r){const x=R_(r);const s=seats();
+  if(x.acts.length||r<R){const o=[...order(),...Object.keys(x.picks)];return [...new Set(o)].filter(i=>x.picks[i])}
+  return s}
+const allPicked=r=>{const x=R_(r),ro=roster(r);return ro.length>=2&&ro.every(i=>x.picks[i])};
 
 async function draw(){
   if(local.busy||local.draws>=MAXDRAW)return;
@@ -335,47 +350,63 @@ function card(a,opt={}){
   const img=a.img?`style="background-image:url('${esc(a.img)}')"`:"";
   return `<div class="card${opt.win?" win":""}"><div class="img" ${img}>${a.img?"":"?"}</div><div class="tx"><h2>${esc(a.title)}</h2><p>${esc(a.ext||"（説明なし）")}</p><div class="meta"><a href="${esc(a.url)}" target="_blank" rel="noopener">Wikipediaで読む</a>　${Number(a.len||0).toLocaleString()}バイト</div></div></div>`;
 }
-// 賭け：2人の記事が出そろったら、相手の記事が見えないまま賭ける（奇数戦は1人目、偶数戦は2人目から）
-function betState(r,s,st){
-  const x=R_(r),[p0,p1]=s,first=r%2?p0:p1;
-  const c={[p0]:Math.min(ANTE,st[p0]),[p1]:Math.min(ANTE,st[p1])};
-  let to=first,acted=new Set(),done=false,fold=null;const log=[];
+// 賭け：全員の記事が出そろったら、他の人の記事が見えないまま順番に賭ける（毎戦、最初に賭ける人がずれる）
+function betState(r,ro,st){
+  const x=R_(r),n=ro.length,c={},folded=new Set();
+  ro.forEach(i=>{c[i]=Math.min(ANTE,st[i])});
+  const can=i=>!folded.has(i)&&c[i]<st[i]; // まだ動ける人（降りていない・全部出していない）
+  let H=Math.max(...ro.map(i=>c[i]));
+  let need=new Set(ro.filter(can));
+  const start=(r-1)%n;
+  const nextFrom=k=>{for(let d=1;d<=n;d++){const i=ro[(k+d)%n];if(need.has(i)&&can(i))return i}return null};
+  let to=need.has(ro[start])&&can(ro[start])?ro[start]:nextFrom(start);
+  const log=[];let done=false,raised=false;
+  const alive=()=>ro.filter(i=>!folded.has(i));
   for(const a of x.acts){
-    if(done)break;if(a.id!==to)continue;
-    const me=a.id,op=me===p0?p1:p0,need=c[op]-c[me];
-    if(a.a==="fold"){if(need<=0)continue;fold=me;done=true;log.push([me,"フォールド"]);break}
-    if(a.a==="check"){if(need>0)continue;acted.add(me);log.push([me,"チェック"]);if(acted.size===2)done=true;else to=op;continue}
-    if(a.a==="call"){if(need<=0)continue;c[me]=Math.min(c[op],st[me]);log.push([me,c[me]===st[me]&&c[me]<c[op]?"コール（オールイン）":"コール"]);done=true;continue}
-    if(a.a==="raise"||a.a==="allin"){
-      const tgt=a.a==="allin"?st[me]:Math.min(st[me],c[op]+Math.max(10,Math.floor(a.amt)));
+    if(done||!to)break;if(a.id!==to)continue;
+    const me=a.id,owe=H-c[me];
+    if(a.a==="fold"){if(owe<=0)continue;folded.add(me);log.push([me,"フォールド"])}
+    else if(a.a==="check"){if(owe>0)continue;log.push([me,"チェック"])}
+    else if(a.a==="call"){if(owe<=0)continue;c[me]=Math.min(H,st[me]);log.push([me,c[me]===st[me]&&c[me]<H?"コール（オールイン）":"コール"])}
+    else if(a.a==="raise"||a.a==="allin"){
+      const tgt=a.a==="allin"?st[me]:Math.min(st[me],H+Math.max(10,Math.floor(a.amt)));
       if(tgt<=c[me])continue;
-      if(tgt<=c[op]){c[me]=tgt;log.push([me,"オールイン"]);done=true;continue}
-      log.push([me,(tgt===st[me]?"オールイン ":(need>0?"レイズ +":"ベット "))+(tgt-c[op])+"枚"]);
-      c[me]=tgt;acted=new Set([me]);to=op;
-      if(c[op]>=st[op]){/* 相手はもう出せない：相手はコールかフォールドだけ */}
-      continue}
+      if(tgt<=H){c[me]=tgt;log.push([me,"オールイン"])}
+      else{log.push([me,(tgt===st[me]?"オールイン ":(raised?"レイズ +":"ベット "))+(tgt-H)+"枚"]);raised=true;H=tgt;c[me]=tgt;need=new Set(ro.filter(i=>i!==me&&can(i)))}
+    }else continue;
+    need.delete(me);
+    if(alive().length<=1){done=true;break}
+    to=nextFrom(ro.indexOf(me));if(!to)done=true;
   }
-  if(!done&&c[p0]>=st[p0]&&c[p1]>=st[p1])done=true; // 2人とも全部出している
-  return{c,to,done,fold,log,stake:Math.min(c[p0],c[p1]),pot:c[p0]+c[p1]};
+  if(!done&&(!to||alive().length<=1))done=true;
+  const pot=ro.reduce((t,i)=>t+c[i],0);
+  return{c,to:done?null:to,done,folded,alive:alive(),log,pot,H};
 }
-function outcome(r,s,j,st){
-  const x=rounds[r];if(!x||!x.picks[s[0]]||!x.picks[s[1]])return null;
-  const b=betState(r,s,st);if(!b.done)return null;
-  if(b.fold){const w=s.find(i=>i!==b.fold);return{w,stake:b.stake,fold:true,how:esc(players.get(b.fold).name)+" さんがフォールド"}}
-  let vid=j&&x.votes[j]?j:Object.keys(x.votes).find(k=>!s.includes(k)); // その戦で票を入れた審判（途中で交代しても残る）
-  if(!vid)return null;const v=x.votes[vid];if(v!==s[0]&&v!==s[1])return null;
-  return{w:v,stake:b.stake,how:"審判 "+esc((players.get(vid)||{}).name||"?")+" さんの判定"};
+// 精算：勝った人は、ほかの各人から「自分が出した枚数」までもらえる（それを超えた分は本人に戻る）
+function settle(ro,c,w){const d={};ro.forEach(i=>d[i]=0);ro.forEach(i=>{if(i===w)return;const t=Math.min(c[i],c[w]);d[i]-=t;d[w]+=t});return d}
+function outcome(r,ro,j,st){
+  const x=rounds[r];if(!x||ro.length<2||!ro.every(i=>x.picks[i]))return null;
+  const b=betState(r,ro,st);if(!b.done)return null;
+  if(b.alive.length===1){const w=b.alive[0],d=settle(ro,b.c,w);return{w,d,gain:d[w],fold:true,how:"ほかの人がフォールド"}}
+  let vid=j&&x.votes[j]?j:Object.keys(x.votes).find(k=>!ro.includes(k)); // その戦で票を入れた審判（途中で交代しても残る）
+  if(!vid)return null;const v=x.votes[vid];if(!b.alive.includes(v))return null;
+  const d=settle(ro,b.c,v);
+  return{w:v,d,gain:d[v],how:"審判 "+esc((players.get(vid)||{}).name||"?")+" さんの判定"};
 }
-function history_(s,j){ // R戦の始まりまでのチップと勝ち数
-  let st={[s[0]]:START,[s[1]]:START};const wins={};
+function history_(j){ // R戦の始まりまでのチップと勝ち数（初めて出る人は1000枚から）
+  let st={};const wins={};const S=i=>{if(st[i]==null)st[i]=START};
   for(let r=1;r<=R;r++){
-    if(rounds[r]&&rounds[r].reset)st={[s[0]]:START,[s[1]]:START};
+    if(rounds[r]&&rounds[r].reset)st={};
     if(r===R)break;
-    const z=outcome(r,s,j,st);if(!z)continue;
-    wins[z.w]=(wins[z.w]||0)+1;const l=s.find(i=>i!==z.w);st[z.w]+=z.stake;st[l]-=z.stake;
+    const x=rounds[r];if(!x)continue;
+    const ro=roster(r);ro.forEach(S);
+    const z=outcome(r,ro,j,st);if(!z)continue;
+    wins[z.w]=(wins[z.w]||0)+1;ro.forEach(i=>st[i]+=z.d[i]);
   }
-  return{st,wins};
+  return{st:new Proxy(st,{get:(o,k)=>o[k]==null?START:o[k]}),wins};
 }
+const blindOrder=(ids)=>{const h=s=>{let v=0;for(const ch of s+":"+R)v=(v*131+ch.charCodeAt(0))>>>0;return v};return [...ids].sort((a,b)=>h(a)-h(b))};
+const LAB="ABCDEF";
 
 function pbar(i,st,status,cls){
   return `<div class="pbar">${av(i)}<div class="pn"><b>${nm(i)}${i===myId?"（あなた）":""}</b><span>${online(i)?"":"オフライン・"}${status.wins||0}勝</span></div><div class="stack"><span class="chip"></span>${st}</div>${status.txt?`<div class="st ${cls||""}">${status.txt}</div>`:""}</div>`;
@@ -384,31 +415,30 @@ function pbar(i,st,status,cls){
 function render(){
   const g=$("game");if(g.classList.contains("hide")||dragging)return;
   if(local.r!==R)local={r:R,draws:0,cur:null,decided:false,busy:false,amt:null};
-  const s=seats(),J=judgeId(),isJ=J===myId,isP=s.includes(myId),opp=s.find(i=>i!==myId);
-  const x=R_(R);
+  const J=judgeId(),isJ=J===myId,x=R_(R),ro=roster(R),isP=ro.includes(myId);
   if(isP&&!local.cur&&(x.draws[myId]||0)>local.draws)local.draws=Math.min(x.draws[myId],MAXDRAW-1);
   if(isP&&x.picks[myId]&&!local.decided){local.decided=true;local.cur=x.picks[myId];local.draws=x.draws[myId]||MAXDRAW}
-  $("who").textContent=s.length<2?"相手を待っています":s.map(i=>(players.get(i)||{}).name).join(" vs ")+"　審判："+(J?(players.get(J)||{}).name:"まだいません");
+  $("who").textContent=ro.length<2?"相手を待っています":ro.map(i=>(players.get(i)||{}).name).join("・")+"　審判："+(J?(players.get(J)||{}).name:"まだいません");
   let h="";
-  if(s.length<2){
-    h=`<div class="mid"><div class="empty"><div><b>相手を待っています</b>上の「招待」で部屋のリンクをコピーして送ってください。3人目に入った人が審判です。</div></div></div>`;
+  if(ro.length<2){
+    h=`<div class="mid"><div class="empty"><div><b>相手を待っています</b>上の「招待」で部屋のリンクをコピーして送ってください。対戦は2〜6人。審判は「対戦中」を押して審判に切り替えるか、AI審判を入れてください。</div></div></div>`;
     return paint(g,h);
   }
-  const H=history_(s,J),wins=H.wins,st=H.st;
-  const both=x.picks[s[0]]&&x.picks[s[1]],B=both?betState(R,s,st):null;
-  const Z=B&&B.done?outcome(R,s,J,st):null;
-  const left=i=>Z?st[i]+(Z.w===i?Z.stake:-Z.stake):B?st[i]-B.c[i]:st[i];
+  const H=history_(J),wins=H.wins,st=H.st;
+  const both=allPicked(R),B=both?betState(R,ro,st):null;
+  const Z=B&&B.done?outcome(R,ro,J,st):null;
+  const left=i=>Z?st[i]+Z.d[i]:B?st[i]-B.c[i]:st[i];
   const lastAct=i=>{if(!B)return"";for(let k=B.log.length-1;k>=0;k--)if(B.log[k][0]===i)return B.log[k][1];return""};
   const stat=i=>{
     if(!both)return x.picks[i]?"決定済み":(x.draws[i]||0)?(x.draws[i]+"回目"):"考え中";
-    if(Z)return Z.w===i?"勝ち":"";
+    if(Z)return Z.w===i?"勝ち":(B.folded.has(i)?"フォールド":"");
     if(!B.done)return B.to===i?"考え中…":lastAct(i)||"待ち";
     return lastAct(i);
   };
-  const top=isP?opp:s[0],bot=isP?myId:s[1];
   const cls=i=>both&&B&&!B.done&&B.to===i?"turn":"";
   const bar=i=>pbar(i,left(i),{wins:wins[i],txt:stat(i)},cls(i));
-  h+=bar(top);
+  const others=ro.filter(i=>i!==myId);
+  h+=others.length>1?`<div class="others">${others.map(bar).join("")}</div>`:bar(others[0]);
   h+=`<div class="mid">`;
   if(isJ)h+=`<div class="judge">あなたは審判です</div>`;
   if(both){
@@ -416,6 +446,7 @@ function render(){
     if(B.log.length)h+=`<div class="log">${B.log.slice(-3).map(([i,t])=>nm(i)+"："+t).join("　→　")}</div>`;
   }
   let dock="";
+  const waitNames=ro.filter(i=>!x.picks[i]).map(nm).join("・");
   if(!both){
     if(isP){
       h+=`<div class="cards"><div class="cw"><div class="tag">あなたの記事　${local.cur?local.draws+"回目":""}</div>${local.cur?card(local.cur):`<div class="empty"><div><b>まだ引いていません</b>下のボタンでWikipediaのランダムな記事を引きます</div></div>`}</div></div>`;
@@ -423,47 +454,48 @@ function render(){
       if(!local.decided){
         dock=local.cur?`<div class="left">引き直し 残り <b>${Math.max(0,lf)}</b> 回　前の記事には戻れません</div><div class="two"><button class="big ghost" id="bd" ${local.busy||lf<=0?"disabled":""}>${local.busy?"引いています…":"引き直す"}</button><button class="big pri" id="bk">これで勝負</button></div>`
           :`<button class="big pri" id="bd" ${local.busy?"disabled":""}>${local.busy?"引いています…":"1枚目を引く"}</button>`;
-      }else dock=`<div class="msg">決定しました。${nm(opp)} さんを待っています</div>`;
+      }else dock=`<div class="msg">決定しました。${waitNames} さんを待っています</div>`;
     }else{
-      h+=`<div class="empty"><div><b>${isJ?"2人が記事を選んでいます":"観戦中"}</b>${isJ?"2人が決めて賭けが終わると、名前を伏せた2枚が出ます":""}</div></div>`;
+      h+=`<div class="empty"><div><b>${isJ?ro.length+"人が記事を選んでいます":"観戦中"}</b>${isJ?"全員が決めて賭けが終わると、名前を伏せた記事が出ます":"今の戦が終わると、次の戦から入れます"}</div></div>`;
     }
   }else if(!B.done){
     if(isP){
-      h+=`<div class="cards duo"><div class="cw"><div class="tag">あなた</div>${card(x.picks[myId])}</div><div class="cw"><div class="tag">${nm(opp)}</div><div class="back"><div><b>？</b><span>賭けが終わると見えます</span></div></div></div></div>`;
-      const need=B.c[opp]-B.c[myId],my=st[myId]-B.c[myId],turn=B.to===myId,wait=local.wait===x.acts.length;
+      h+=`<div class="cards duo"><div class="cw"><div class="tag">あなた</div>${card(x.picks[myId])}</div><div class="cw"><div class="tag">ほかの${others.length}人</div><div class="back"><div><b>？</b><span>賭けが終わると見えます</span></div></div></div></div>`;
+      const my=st[myId]-B.c[myId],need=Math.min(B.H-B.c[myId],my),turn=B.to===myId,wait=local.wait===x.acts.length;
       if(turn){
-        const capped=B.c[opp]>=st[opp],room_=my-Math.max(need,0);
+        const capped=!ro.some(i=>i!==myId&&!B.folded.has(i)&&B.c[i]<st[i]),room_=my-Math.max(need,0);
         const minA=Math.min(10,room_),maxA=room_;
         if(local.amt==null||local.amt>maxA||local.amt<minA)local.amt=Math.min(maxA,Math.max(minA,Math.min(100,maxA)));
         const canRaise=!capped&&room_>0&&!wait;
         const p=maxA>minA?Math.round((local.amt-minA)/(maxA-minA)*100):100;
         const raiseLbl=need>0?"レイズ":"ベット",allin=local.amt>=maxA;
-        dock=`<div class="msg">あなたの番です。相手の記事は見えません</div>`;
+        dock=`<div class="msg">あなたの番です。ほかの人の記事は見えません</div>`;
         if(canRaise)dock+=`<div class="amt"><div class="amth"><span class="lbl">${need>0?"上乗せする枚数":"賭ける枚数"}</span><b id="av">${local.amt}${allin?"（オールイン）":""}</b></div>
           <input type="range" id="sl" min="${minA}" max="${maxA}" step="10" value="${local.amt}" style="--p:${p}%" aria-label="賭ける枚数">
           <div class="quick"><button data-q="${Math.floor(B.pot/2)}">½ポット</button><button data-q="${B.pot}">ポット</button><button data-q="${Math.floor(maxA/2)}">半分</button><button data-q="${maxA}">オールイン</button></div></div>`;
-        dock+=`<div class="acts">${need>0?`<button class="big ghost" data-act="fold" ${wait?"disabled":""}>フォールド</button><button class="big sec" data-act="call" ${wait?"disabled":""}>コール<small>${Math.min(need,my)}</small></button>`:`<button class="big ghost" disabled>フォールド</button><button class="big sec" data-act="check" ${wait?"disabled":""}>チェック</button>`}<button class="big pri" id="ra" data-lbl="${raiseLbl}" data-act="${allin?"allin":"raise"}" ${canRaise?"":"disabled"}>${allin?"オールイン":raiseLbl}<small>${canRaise?(allin?maxA:"+"+local.amt):"—"}</small></button></div>`;
-      }else dock=`<div class="msg">${nm(opp)} さんの番です</div>`;
+        dock+=`<div class="acts">${need>0?`<button class="big ghost" data-act="fold" ${wait?"disabled":""}>フォールド</button><button class="big sec" data-act="call" ${wait?"disabled":""}>コール<small>${need}</small></button>`:`<button class="big ghost" disabled>フォールド</button><button class="big sec" data-act="check" ${wait?"disabled":""}>チェック</button>`}<button class="big pri" id="ra" data-lbl="${raiseLbl}" data-act="${allin?"allin":"raise"}" ${canRaise?"":"disabled"}>${allin?"オールイン":raiseLbl}<small>${canRaise?(allin?maxA:"+"+local.amt):"—"}</small></button></div>`;
+      }else dock=`<div class="msg">${B.to?nm(B.to)+" さんの番です":"待っています"}</div>`;
     }else{
-      h+=`<div class="empty"><div><b>2人が賭けています</b>${isJ?"賭けが決まったら、名前を伏せた2枚が出ます":""}</div></div>`;
+      h+=`<div class="empty"><div><b>${ro.length}人が賭けています</b>${isJ?"賭けが決まったら、名前を伏せた記事が出ます":""}</div></div>`;
     }
   }else{
     const blind=!isP&&!Z;
-    const ord=(R+s[0].charCodeAt(0)+s[1].charCodeAt(0))%2?[s[1],s[0]]:s;
-    if(Z)h+=`<div class="banner"><b>${nm(Z.w)} の勝ち <em>+${Z.stake}</em></b><span>${Z.how}</span></div>`;
-    h+=`<div class="cards duo">`+ord.map((i,k)=>{const lab="AB"[k];
-      return `<div class="cw"><div class="tag">${blind?"記事 "+lab:lab+"："+nm(i)+(i===myId?"（あなた）":"")+"　"+(x.draws[i]||"?")+"回目"}</div>${card(x.picks[i],{win:Z&&Z.w===i})}</div>`}).join("")+`</div>`;
+    const show=Z&&Z.fold?ro:B.alive,ord=blindOrder(show);
+    if(Z)h+=`<div class="banner"><b>${nm(Z.w)} の勝ち <em>+${Z.gain}</em></b><span>${Z.how}</span></div>`;
+    h+=`<div class="cards ${ord.length>2?"multi":"duo"}">`+ord.map((i,k)=>{const lab=LAB[k];
+      return `<div class="cw"><div class="tag">${blind?"記事 "+lab:lab+"："+nm(i)+(i===myId?"（あなた）":"")+"　"+(x.draws[i]||"?")+"回目"+(B.folded.has(i)?"（フォールド）":"")}</div>${card(x.picks[i],{win:Z&&Z.w===i})}</div>`}).join("")+`</div>`;
     if(!Z){
       if(aiOn&&J===AI_ID)aiJudge(ord,x.picks);
       if(J&&J.startsWith("ai-"))dock=`<div class="msg">AI審判が判定中…</div>`;
-      else if(isJ)dock=`<div class="msg">名前は伏せてあります。強そうな方を選んでください</div><div class="two">${ord.map((i,k)=>`<button class="big pri" data-v="${i}">${"AB"[k]} が強そう</button>`).join("")}</div>`;
-      else dock=`<div class="msg">${J?"審判の判定を待っています":"審判（3人目）がまだいません。招待リンクで呼んでください"}</div>`;
+      else if(isJ)dock=`<div class="msg">名前は伏せてあります。いちばん強そうなものを選んでください</div><div class="${ord.length>2?"pickn":"two"}">${ord.map((i,k)=>`<button class="big pri" data-v="${i}">${LAB[k]} が強そう</button>`).join("")}</div>`;
+      else dock=`<div class="msg">${J?"審判の判定を待っています":"審判がいません。だれかが「対戦中」を押して審判になるか、AI審判を入れてください"}</div>`;
     }else{
-      const after={};s.forEach(i=>after[i]=left(i));const broke=s.some(i=>after[i]<ANTE);
-      dock=broke&&isP?`<div class="msg">チップが尽きた人がいます</div><button class="big pri" id="rs">チップを配り直して次へ</button>`:`<button class="big pri" id="nx">もう一局</button>`;
+      const broke=ro.some(i=>left(i)<ANTE);
+      dock=broke&&(isP||isJ)?`<div class="msg">チップが尽きた人がいます</div><div class="two"><button class="big ghost" id="nx">このまま次へ</button><button class="big pri" id="rs">全員配り直して次へ</button></div>`:`<button class="big pri" id="nx">もう一局</button>`;
     }
   }
-  h+=`</div>`+bar(bot);
+  h+=`</div>`;
+  if(isP)h+=bar(myId);
   if(dock)h+=`<div class="dock">${dock}</div>`;
   paint(g,h);
 }
