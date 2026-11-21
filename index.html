@@ -215,8 +215,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .sc.c10{--c:#fbf5e8;--m:#b9ad98;--r:rgba(26,20,18,.45)}.sc.c50{--c:#d7372b;--m:#fff7ec;--r:rgba(255,247,236,.7)}.sc.c100{--c:#ffcf3f;--m:#fff7ec;--r:rgba(26,20,18,.45)}.sc.c500{--c:#1a1412;--m:#fff7ec;--r:rgba(255,207,63,.8);border-color:#000}
 .sc.new{animation:scdrop .18s ease-out}
 @keyframes scdrop{from{transform:translateY(-22px);opacity:0}}
-.quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.quick button{min-height:36px;border-radius:999px;background:#fff;border:2px solid var(--line);color:var(--ink);font-size:12.5px;font-weight:700}
+.quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:2px solid var(--ink);border-radius:12px;overflow:hidden;background:#fff}
+.quick button{min-height:34px;border:0;border-radius:0;background:transparent;color:var(--ink);font-size:12.5px;font-weight:900;white-space:nowrap}
+.quick button+button{border-left:2px solid var(--ink)}.quick button:active{background:var(--gold)}
 .left{font-size:12.5px;color:var(--sub);text-align:center}.left b{font:400 16px var(--fn);color:var(--ink)}
 /* チャットののぞき窓（スマホ：最新の発言を常に表示） */
 .peek{flex:none;display:flex;align-items:center;gap:8px;margin:0 12px 8px;padding:8px 12px;border-radius:14px;background:rgba(26,20,18,.88);color:var(--pn);text-align:left;min-height:44px}
@@ -276,7 +277,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22l"; // 新しい版を出したら変える
+const VER="2026-11-22m"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -738,8 +739,8 @@ function render(){
         const raiseLbl=need>0?"レイズ":"ベット",allin=local.amt>=maxA;
         dock=`<div class="msg">あなたの番です。ほかの人の記事は見えません</div>`;
         if(canRaise)dock+=`<div class="amt"><div class="amth"><span class="lbl">${need>0?"上乗せする枚数":"賭ける枚数"}</span><b id="av">${local.amt}${allin?"（オールイン）":""}</b><button class="clr" id="clr">クリア</button></div>
-          <div class="chipsrow" id="cr" data-min="${minA}" data-max="${maxA}">${[10,50,100,500].map(v=>`<button class="cbtn c${v}" data-add="${v}" ${local.amt>=maxA?"disabled":""}><span>+${v}</span></button>`).join("")}</div>
-          <div class="quick"><button data-q="${Math.floor(B.pot/2)}">½ポット</button><button data-q="${B.pot}">ポット</button><button data-q="${Math.floor(maxA/2)}">半分</button><button data-q="${maxA}">オールイン</button></div></div>`;
+          <div class="quick"><button data-q="${Math.floor(B.pot/2)}">½ポット</button><button data-q="${B.pot}">ポット</button><button data-q="${Math.floor(maxA/2)}">半分</button><button data-q="${maxA}">オールイン</button></div>
+          <div class="chipsrow" id="cr" data-min="${minA}" data-max="${maxA}">${[10,50,100,500].map(v=>`<button class="cbtn c${v}" data-add="${v}" ${local.amt>=maxA?"disabled":""}><span>+${v}</span></button>`).join("")}</div></div>`;
         dock+=`<div class="acts">${need>0?`<button class="big ghost" data-act="fold" ${wait?"disabled":""}>フォールド</button><button class="big sec" data-act="call" ${wait?"disabled":""}>コール<small>${need}</small></button>`:`<button class="big ghost" disabled>フォールド</button><button class="big sec" data-act="check" ${wait?"disabled":""}>チェック</button>`}<button class="big pri" id="ra" data-lbl="${raiseLbl}" data-act="${allin?"allin":"raise"}" ${canRaise?"":"disabled"}>${allin?"オールイン":raiseLbl}<small>${canRaise?(allin?maxA:"+"+local.amt):"—"}</small></button></div>`;
       }else dock=`<div class="msg">${B.to?nm(B.to)+" さんの番です":"待っています"}</div>`;
     }else{
