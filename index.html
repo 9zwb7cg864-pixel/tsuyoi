@@ -185,7 +185,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-21i"; // 新しい版を出したら変える
+const VER="2026-11-22a"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -236,14 +236,15 @@ function enterRoom(rm,ord){
   for(const i of fixedOrder)if(!players.has(i))players.set(i,{name:(want.get(i)||{}).name||"入室待ち",first:0,last:0});
   try{history.replaceState(null,"","?r="+room+(fixedOrder.length===3?"&o="+fixedOrder.join("."):""))}catch(e){}
   $("home").classList.add("hide");$("game").classList.remove("hide");$("peek").classList.remove("hide");$("peek").onclick=()=>setChat(true);$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
-  $("topr").innerHTML=`<button class="icbtn" id="rl">${myRole==="judge"?"審判中":"対戦中"}</button>${store.get("tsy-owner")?`<button class="icbtn" id="ai">${aiOn?"AIを外す":"AI審判"}</button>`:""}<button class="icbtn" id="cp">招待</button><button class="icbtn" id="lv">退室</button>`;
+  $("topr").innerHTML=`<button class="icbtn" id="rl">${myRole==="judge"?"審判中":"対戦中"}</button>${store.get("tsy-owner")?`<button class="icbtn" id="ad">管理</button>`:""}<button class="icbtn" id="cp">招待</button><button class="icbtn" id="lv">退室</button>`;
   $("rl").onclick=()=>setRole(myRole==="judge"?"player":"judge");
   $("lv").onclick=async()=>{ // 退室：みんなに知らせてトップに戻る（AI審判を入れていたら一緒に外す）
     if(!confirm("部屋から出ますか？"))return;
-    try{if(aiOn)await sendAs({t:"leave",r:R});await send({t:"leave",r:R})}catch(e){}
-    store.set("tsy-ai-"+room,"0");left_=true;location.href=location.pathname;
+    try{if(aiOn)await sendAs({t:"leave",r:R});for(const c of cpus)await sendCpu(c,{t:"leave",r:R});await send({t:"leave",r:R})}catch(e){}
+    store.set("tsy-ai-"+room,"0");store.set("tsy-cpu-"+room,"[]");left_=true;location.href=location.pathname;
   };
-  if($("ai"))$("ai").onclick=()=>setAi(!aiOn);
+  if($("ad"))$("ad").onclick=ownerSheet;
+  if(store.get("tsy-owner")){try{cpus=JSON.parse(store.get("tsy-cpu-"+room)||"[]")}catch(e){cpus=[]}if(cpus.length)setTimeout(()=>{cpus.forEach(c=>sendCpu(c,{t:"hello",r:R}));cpuBeatOn()},1500)}
   if(store.get("tsy-owner")&&store.get("tsy-ai-"+room)==="1")setTimeout(()=>setAi(true),1500);
   $("cp").onclick=()=>{ // 招待：対戦者として／審判として、の2種類のリンク
     const base=location.origin+location.pathname+"?r="+room,d=document.createElement("div");d.className="sheet";
@@ -298,10 +299,48 @@ function lcheck(){
 }
 
 function sendAs(m){m.id=AI_ID;m.name="AI審判";m.role="judge";return fetch(RELAY+"tsyoi-"+room,{method:"POST",body:JSON.stringify(m)}).catch(()=>{})}
+// ---- CPU（持ち主の端末が動かす対戦相手。自分の記事しか見ずに賭ける） ----
+let cpus=[],cpuBeat=null;const cpuBusy={};
+const CPUNAMES=["CPUあか","CPUあお","CPUきいろ","CPUみどり","CPUしろ"];
+function sendCpu(c,m){m.id=c.id;m.name=c.name;m.role="player";return fetch(RELAY+"tsyoi-"+room,{method:"POST",body:JSON.stringify(m)}).catch(()=>{})}
+function cpuSave(){store.set("tsy-cpu-"+room,JSON.stringify(cpus))}
+function cpuBeatOn(){clearInterval(cpuBeat);if(cpus.length)cpuBeat=setInterval(()=>cpus.forEach(c=>sendCpu(c,{t:"hello",r:R})),12000)}
+function addCpu(){if(seats().length>=MAXP){toast("席がいっぱいです（6人まで）");return}
+  const used=new Set(cpus.map(c=>c.name)),name=CPUNAMES.find(n=>!used.has(n))||("CPU"+(cpus.length+1));
+  const c={id:"cpu-"+myId+"-"+Date.now().toString(36),name};cpus.push(c);cpuSave();sendCpu(c,{t:"join",r:R});cpuBeatOn();render()}
+function clearCpus(){cpus.forEach(c=>sendCpu(c,{t:"leave",r:R}));cpus=[];cpuSave();cpuBeatOn();render()}
+function ownerSheet(){
+  const d=document.createElement("div");d.className="sheet";
+  d.innerHTML=`<div class="sheetin"><b>管理（オーナーだけ）</b><button class="big pri" data-k="ai">${aiOn?"AI審判を外す":"AI審判を入れる"}</button><button class="big sec" data-k="cpu">CPUを1人入れる</button>${cpus.length?`<button class="big sec" data-k="clr">CPUを全員外す（${cpus.length}人）</button>`:""}<button class="big ghost" data-k="x">閉じる</button></div>`;
+  d.onclick=e=>{const b=e.target.closest("button");if(!b&&e.target!==d)return;const k=b&&b.dataset.k;if(k==="ai")setAi(!aiOn);else if(k==="cpu")addCpu();else if(k==="clr")clearCpus();d.remove()};
+  document.body.appendChild(d);
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function cpuPick(c,r){ // 記事を引く。小さい記事なら何回か引き直す
+  let best=null,n=0;
+  for(;n<4;){await wait(1200+Math.random()*1800);try{const j=await fetch(API).then(x=>x.json());const pg=Object.values(j.query.pages)[0];n++;
+    best={title:pg.title,ext:(pg.extract||"").slice(0,300),img:pg.thumbnail?pg.thumbnail.source:"",url:pg.fullurl||("https://ja.wikipedia.org/wiki/"+encodeURIComponent(pg.title)),len:pg.length||0};
+    sendCpu(c,{t:"draw",r,draws:n});if(best.len>=12000)break}catch(e){n++}}
+  if(best&&R===r)sendCpu(c,{t:"pick",r,a:best,draws:n});
+}
+function cpuMove(c,B,st,x){ // 賭け方：自分の記事の大きさで強さを決める
+  const s=(x.picks[c.id]||{}).len||0,owe=B.H-B.c[c.id],my=st[c.id]-B.c[c.id],room_=my-owe,rnd=Math.random();
+  const raise=a=>a>=room_?{a:"allin"}:{a:"raise",amt:a};
+  if(s>=30000){if(room_>0&&(owe===0||rnd<.35))return raise(100+Math.floor(rnd*3)*50);return owe>0?{a:"call"}:{a:"check"}}
+  if(s>=10000){if(owe===0)return rnd<.2&&room_>0?raise(100):{a:"check"};return owe<=200||owe<=my*.15?{a:"call"}:{a:"fold"}}
+  if(owe===0)return rnd<.1&&room_>0?raise(100):{a:"check"};return owe<=60?{a:"call"}:{a:"fold"};
+}
+function cpuTick(ro,x,both,B,st){
+  for(const c of cpus){if(!ro.includes(c.id))continue;
+    if(!both&&!x.picks[c.id]){const k="p"+R+c.id;if(!cpuBusy[k]){cpuBusy[k]=1;cpuPick(c,R)}}
+    if(B&&!B.done&&B.to===c.id){const k="a"+R+":"+x.acts.length+c.id,t=Date.now();if(!cpuBusy[k]||t-cpuBusy[k]>15000){cpuBusy[k]=t;const r=R;
+      setTimeout(()=>{if(R!==r)return;const m=cpuMove(c,B,st,x);sendCpu(c,Object.assign({t:"act",r,amt:0},m))},1500+Math.random()*2000)}}
+  }
+}
 function setAi(on){
   aiOn=on;store.set("tsy-ai-"+room,on?"1":"0");clearInterval(aiBeat);
   if(on){sendAs({t:"join",r:R});aiBeat=setInterval(()=>sendAs({t:"hello",r:R}),12000)}else sendAs({t:"leave",r:R});
-  const b=$("ai");if(b)b.textContent=on?"AIを外す":"AI審判";render();
+  render();
 }
 async function aiJudge(ord,picks){ // 持ち主の端末でGeminiに判定してもらい、審判の票として送る
   const key=R+":"+ord.join();if(aiRunning===key)return;aiRunning=key;
@@ -472,6 +511,7 @@ function render(){
   const cupTag=`<div class="cup">第${H.cup}大会　残り${Object.keys(H.raw).length?Object.keys(H.raw).filter(i=>H.raw[i]>0).length:ro.length}人</div>`;
   const both=allPicked(R),B=both?betState(R,ro,st):null;
   const Z=B&&B.done?outcome(R,ro,J,st):null;
+  if(cpus.length)cpuTick(ro,x,both,B,st);
   const left=i=>Z?st[i]+Z.d[i]:B?st[i]-B.c[i]:st[i];
   const lastAct=i=>{if(!B)return"";for(let k=B.log.length-1;k>=0;k--)if(B.log[k][0]===i)return B.log[k][1];return""};
   const stat=i=>{
