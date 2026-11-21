@@ -170,7 +170,8 @@ const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},se
 let myId=store.get("tsy-id"); // 端末に保存して、閉じても同じ人として入り直せるようにする
 if(!myId){myId=Math.random().toString(36).slice(2,10);store.set("tsy-id",myId)}
 if(location.hash==="#owner"){const t=prompt("AI審判の合言葉を入れてください");if(t)store.set("tsy-owner",t.trim());history.replaceState(null,"",location.pathname+location.search)}
-let aiOn=false,aiRunning=null; // AI審判（持ち主の端末だけ。合言葉は端末に保存）
+let aiOn=false,aiRunning=null,aiBeat=null; // AI審判（持ち主の端末だけ。合言葉は端末に保存）
+const AI_ID="ai-"+myId; // AI審判は、持ち主の端末が代わりに動かす別の参加者
 const JUDGE_URL="https://orange-bar-fd12.9zwb7cg864.workers.dev/";
 const q=new URLSearchParams(location.search);
 $("nm").value=store.get("tsy-name")||"";
@@ -202,9 +203,10 @@ function enterRoom(rm,ord){
   for(const i of fixedOrder)if(!players.has(i))players.set(i,{name:(want.get(i)||{}).name||"入室待ち",first:0,last:0});
   try{history.replaceState(null,"","?r="+room+(fixedOrder.length===3?"&o="+fixedOrder.join("."):""))}catch(e){}
   $("home").classList.add("hide");$("game").classList.remove("hide");$("peek").classList.remove("hide");$("peek").onclick=()=>setChat(true);$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
-  $("topr").innerHTML=`<button class="icbtn" id="rl">役職：${myRole==="judge"?"審判":"対戦"}</button>${store.get("tsy-owner")?`<button class="icbtn" id="ai">AI審判：${aiOn?"ON":"OFF"}</button>`:""}<button class="icbtn" id="cp">招待</button><button class="icbtn" id="co">チャット<span class="badge hide" id="ub"></span></button>`;
+  $("topr").innerHTML=`<button class="icbtn" id="rl">役職：${myRole==="judge"?"審判":"対戦"}</button>${store.get("tsy-owner")?`<button class="icbtn" id="ai">${aiOn?"AI審判を外す":"AI審判を入れる"}</button>`:""}<button class="icbtn" id="cp">招待</button><button class="icbtn" id="co">チャット<span class="badge hide" id="ub"></span></button>`;
   $("rl").onclick=()=>setRole(myRole==="judge"?"player":"judge");
-  if($("ai"))$("ai").onclick=()=>{aiOn=!aiOn;$("ai").textContent="AI審判："+(aiOn?"ON":"OFF");render()};
+  if($("ai"))$("ai").onclick=()=>setAi(!aiOn);
+  if(store.get("tsy-owner")&&store.get("tsy-ai-"+room)==="1")setTimeout(()=>setAi(true),1500);
   $("cp").onclick=async()=>{const u=location.origin+location.pathname+"?r="+room;try{await navigator.clipboard.writeText(u);toast("招待リンクをコピーしました")}catch(_){toast(u)}};
   $("co").onclick=()=>setChat(!chatOpen);
   addEventListener("pagehide",()=>{try{navigator.sendBeacon(RELAY+"tsyoi-"+room,JSON.stringify({t:"leave",r:R,id:myId,name:me}))}catch(e){}});
@@ -253,16 +255,22 @@ function lcheck(){
   }
 }
 
+function sendAs(m){m.id=AI_ID;m.name="AI審判";m.role="judge";return fetch(RELAY+"tsyoi-"+room,{method:"POST",body:JSON.stringify(m)}).catch(()=>{})}
+function setAi(on){
+  aiOn=on;store.set("tsy-ai-"+room,on?"1":"0");clearInterval(aiBeat);
+  if(on){sendAs({t:"join",r:R});aiBeat=setInterval(()=>sendAs({t:"hello",r:R}),12000)}else sendAs({t:"leave",r:R});
+  const b=$("ai");if(b)b.textContent=on?"AI審判を外す":"AI審判を入れる";render();
+}
 async function aiJudge(ord,picks){ // 持ち主の端末でGeminiに判定してもらい、審判の票として送る
   const key=R+":"+ord.join();if(aiRunning===key)return;aiRunning=key;
   const a=picks[ord[0]]||{},b=picks[ord[1]]||{};
   try{
     const res=await fetch(JUDGE_URL,{method:"POST",body:JSON.stringify({token:store.get("tsy-owner"),a:{title:a.title,extract:a.ext},b:{title:b.title,extract:b.ext}})});
     const d=await res.json().catch(()=>({}));
-    if(!res.ok){toast(d.error==="limit"?"AI審判は今日の分が終わりました":"AI審判がうまく動きませんでした");aiOn=false;render();return}
+    if(!res.ok){toast(d.error==="limit"?"AI審判は今日の分が終わりました":"AI審判がうまく動きませんでした");setAi(false);return}
     const w=d.winner==="B"?ord[1]:ord[0];
-    R_(R).votes[myId]=w;send({t:"vote",r:R,for:w});send({t:"chat",r:R,text:"AI審判："+d.reason});render();
-  }catch(e){toast("AI審判に接続できませんでした");aiOn=false;render()}
+    R_(R).votes[AI_ID]=w;await sendAs({t:"vote",r:R,for:w});sendAs({t:"chat",r:R,text:d.reason});render();
+  }catch(e){toast("AI審判に接続できませんでした");setAi(false)}
   finally{aiRunning=null}
 }
 
@@ -307,7 +315,7 @@ function order(){ // 先に来た2人が対戦者、3人目が審判、4人目�
   return [...pl.slice(0,2),...jud,...pl.slice(2).filter(i=>!players.get(i).left)]; // 審判志望の人が先に審判の席へ
 }
 const seats=()=>order().filter(i=>players.get(i).role!=="judge").slice(0,2);
-const judgeId=()=>{const c=order().filter(i=>!seats().includes(i));return c.find(i=>online(i))||c[0]}; // 審判が抜けたら、次にいる人が審判
+const judgeId=()=>{const c=order().filter(i=>!seats().includes(i));return c.find(i=>i.startsWith("ai-")&&online(i))||c.find(i=>online(i))||c[0]}; // AI審判がいれば優先 // 審判が抜けたら、次にいる人が審判
 const online=id=>{const p=players.get(id);return p&&Date.now()/1000-p.last<40};
 
 async function draw(){
@@ -446,7 +454,8 @@ function render(){
     h+=`<div class="cards duo">`+ord.map((i,k)=>{const lab="AB"[k];
       return `<div class="cw"><div class="tag">${blind?"記事 "+lab:lab+"："+nm(i)+(i===myId?"（あなた）":"")+"　"+(x.draws[i]||"?")+"回目"}</div>${card(x.picks[i],{win:Z&&Z.w===i})}</div>`}).join("")+`</div>`;
     if(!Z){
-      if(isJ&&aiOn&&store.get("tsy-owner")){dock=`<div class="msg">AI審判が判定中…</div>`;aiJudge(ord,x.picks)}
+      if(aiOn&&J===AI_ID)aiJudge(ord,x.picks);
+      if(J&&J.startsWith("ai-"))dock=`<div class="msg">AI審判が判定中…</div>`;
       else if(isJ)dock=`<div class="msg">名前は伏せてあります。強そうな方を選んでください</div><div class="two">${ord.map((i,k)=>`<button class="big pri" data-v="${i}">${"AB"[k]} が強そう</button>`).join("")}</div>`;
       else dock=`<div class="msg">${J?"審判の判定を待っています":"審判（3人目）がまだいません。招待リンクで呼んでください"}</div>`;
     }else{
