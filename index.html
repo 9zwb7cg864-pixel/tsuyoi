@@ -288,7 +288,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22s"; // 新しい版を出したら変える
+const VER="2026-11-22t"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -556,7 +556,7 @@ function fxChamp(name,cup,times){ // 光の筋の舞台にトロフィーが落�
   T.push(setTimeout(()=>{d.onclick=close},1000));setTimeout(close,7500);
 }
 // ---- お題（戦ごとに「強そう」以外でも勝負できる） ----
-const THEMES=["強そう","モテそう","高そう","賢そう"];
+const THEMES=["強そう","モテそう","高そう","賢そう","しぶとそう","偉そう","怖そう"];
 const themeSet=[];
 function themeOf(r){let c={mode:"fixed",k:0};for(const t of themeSet)if(t.from<=r)c=t;
   if(c.mode==="rand"){let v=0;for(const ch of room+":"+r)v=(v*131+ch.charCodeAt(0))>>>0;return THEMES[v%THEMES.length]}return THEMES[c.k]||THEMES[0]}
