@@ -208,8 +208,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .cbtn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}.cbtn:disabled{opacity:.35}
 .cbtn.c50{--c:#d7372b;--t:#fff7ec}.cbtn.c100{--c:#ffcf3f}.cbtn.c500{--c:#1a1412;--t:#ffcf3f}
 .dock{position:relative}
-.stk{position:absolute;left:26px;top:1px;width:44px;height:0;pointer-events:none;z-index:5}
-.sc{position:absolute;left:0;width:44px;height:6px;border-radius:2.5px;border:1.5px solid var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.28),transparent 45%,rgba(0,0,0,.18)),repeating-linear-gradient(90deg,var(--c) 0 8px,var(--m) 8px 12px)}
+.stk{position:absolute;left:22px;top:1px;width:52px;height:0;pointer-events:none;z-index:5}
+.sc{position:absolute;left:0;box-sizing:border-box;width:52px;height:5.4px;border-radius:2px;border:1px solid var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.28),transparent 45%,rgba(0,0,0,.18)),repeating-linear-gradient(90deg,var(--c) 0 9px,var(--m) 9px 13px)}
 .sc.c10{--c:#fbf5e8;--m:#b9ad98}.sc.c50{--c:#d7372b;--m:#fff7ec}.sc.c100{--c:#ffcf3f;--m:#fff7ec}.sc.c500{--c:#1a1412;--m:#fff7ec;border-color:#000}
 .sc.new{animation:scdrop .18s ease-out}
 @keyframes scdrop{from{transform:translateY(-22px);opacity:0}}
@@ -275,7 +275,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22n"; // 新しい版を出したら変える
+const VER="2026-11-22o"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -804,7 +804,7 @@ function paint(g,h){
 let dragging=false;
 function stackHTML(v,drop){ // 賭ける枚数を、薄いチップの山にして見せる（500・100・50・10に崩す。多すぎるときは上を省く）
   const out=[];for(const d of [500,100,50,10]){while(v>=d&&out.length<18){out.push(d);v-=d}}
-  return out.map((d,k)=>`<i class="sc c${d}${drop&&k===out.length-1?" new":""}" style="bottom:${k*5}px;left:${(k*5)%3-1}px"></i>`).join("")}
+  return out.map((d,k)=>`<i class="sc c${d}${drop&&k===out.length-1?" new":""}" style="bottom:${(k*4.4).toFixed(1)}px;left:${(k*5)%3-1}px"></i>`).join("")}
 function amtUI(){ // チップを足している間は、数字だけ書き換える（画面は作り直さない）
   const cr=$("cr"),ra=$("ra");if(!cr||!ra)return;const mx=Number(cr.dataset.max),v=local.amt,all=v>=mx;
   const av=$("av");av.textContent=v+(all?"（オールイン）":"");av.classList.remove("bump");void av.offsetWidth;av.classList.add("bump");
