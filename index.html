@@ -171,7 +171,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-21b"; // 新しい版を出したら変える
+const VER="2026-11-21c"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -356,7 +356,7 @@ async function draw(){
     const j=await fetch(API).then(r=>r.json());
     const pg=Object.values(j.query.pages)[0];
     local.cur={title:pg.title,ext:(pg.extract||"").slice(0,300),img:pg.thumbnail?pg.thumbnail.source:"",url:pg.fullurl||("https://ja.wikipedia.org/wiki/"+encodeURIComponent(pg.title)),len:pg.length||0};
-    local.draws++;send({t:"draw",r:R,draws:local.draws});
+    local.draws++;send({t:"draw",r:R,draws:local.draws});store.set("tsy-cur-"+room,JSON.stringify({r:R,cur:local.cur,draws:local.draws}));
   }catch(e){toast("記事を引けませんでした。もう一度押してください")}
   local.busy=false;render();
 }
@@ -433,7 +433,8 @@ function pbar(i,st,status,cls){
 
 function render(){
   const g=$("game");if(g.classList.contains("hide")||dragging)return;
-  if(local.r!==R)local={r:R,draws:0,cur:null,decided:false,busy:false,amt:null};
+  if(local.r!==R){local={r:R,draws:0,cur:null,decided:false,busy:false,amt:null};
+    try{const sv=JSON.parse(store.get("tsy-cur-"+room)||"null");if(sv&&sv.r===R&&sv.cur){local.cur=sv.cur;local.draws=sv.draws}}catch(e){}} // 読み込み直しても、引いた記事を戻す
   const J=judgeId(),isJ=J===myId,x=R_(R),ro=roster(R),isP=ro.includes(myId);
   if(isP&&!local.cur&&(x.draws[myId]||0)>local.draws)local.draws=Math.min(x.draws[myId],MAXDRAW-1);
   if(isP&&x.picks[myId]&&!local.decided){local.decided=true;local.cur=x.picks[myId];local.draws=x.draws[myId]||MAXDRAW}
