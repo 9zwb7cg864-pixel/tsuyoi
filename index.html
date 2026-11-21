@@ -187,17 +187,10 @@ const nm=id=>esc((players.get(id)||{}).name||"?");
 function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),1800)}
 
 $("fr").onclick=()=>{$("frbox").classList.toggle("hide");if(!$("frbox").classList.contains("hide"))$("rc").focus()};
-$("enter").onclick=()=>pickRole($("rc").value.trim().replace(/\D/g,"").slice(0,8));
+$("enter").onclick=()=>enterRoom($("rc").value.trim().replace(/\D/g,"").slice(0,8));
 function needName(){if($("nm").value.trim())return false;$("nm").focus();toast("先に名前を入れてください");return true}
-let myRole="player";
-function pickRole(rm){ // 部屋に入る前に、対戦者か審判かを選ぶ
-  if(needName())return;if(!rm){$("rc").focus();return}
-  const d=document.createElement("div");
-  d.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:99";
-  d.innerHTML=`<div style="background:#fff;border-radius:16px;padding:20px;width:min(300px,86vw);text-align:center"><div style="font-weight:700;margin-bottom:12px">役職を選んでください</div><div style="display:grid;gap:8px"><button class="big pri" data-r="player">対戦する</button><button class="big" data-r="judge">審判をする</button></div></div>`;
-  d.onclick=e=>{const b=e.target.closest("button[data-r]");if(!b){if(e.target===d)d.remove();return}myRole=b.dataset.r;d.remove();enterRoom(rm)};
-  document.body.appendChild(d);
-}
+let myRole="player"; // 部屋の中で「対戦」「審判」を切り替える
+function setRole(r){myRole=r;const b=$("rl");if(b)b.textContent="役職："+(r==="judge"?"審判":"対戦");toast(r==="judge"?"審判になりました":"対戦者になりました");hello()}
 function enterRoom(rm,ord){
   if(needName())return;
   me=$("nm").value.trim().slice(0,12);room=rm;if(!room){$("rc").focus();return}
@@ -206,7 +199,8 @@ function enterRoom(rm,ord){
   for(const i of fixedOrder)if(!players.has(i))players.set(i,{name:(want.get(i)||{}).name||"入室待ち",first:0,last:0});
   try{history.replaceState(null,"","?r="+room+(fixedOrder.length===3?"&o="+fixedOrder.join("."):""))}catch(e){}
   $("home").classList.add("hide");$("game").classList.remove("hide");$("peek").classList.remove("hide");$("peek").onclick=()=>setChat(true);$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
-  $("topr").innerHTML=`<button class="icbtn" id="cp">招待</button><button class="icbtn" id="co">チャット<span class="badge hide" id="ub"></span></button>`;
+  $("topr").innerHTML=`<button class="icbtn" id="rl">役職：${myRole==="judge"?"審判":"対戦"}</button><button class="icbtn" id="cp">招待</button><button class="icbtn" id="co">チャット<span class="badge hide" id="ub"></span></button>`;
+  $("rl").onclick=()=>setRole(myRole==="judge"?"player":"judge");
   $("cp").onclick=async()=>{const u=location.origin+location.pathname+"?r="+room;try{await navigator.clipboard.writeText(u);toast("招待リンクをコピーしました")}catch(_){toast(u)}};
   $("co").onclick=()=>setChat(!chatOpen);
   addEventListener("pagehide",()=>{try{navigator.sendBeacon(RELAY+"tsyoi-"+room,JSON.stringify({t:"leave",r:R,id:myId,name:me}))}catch(e){}});
