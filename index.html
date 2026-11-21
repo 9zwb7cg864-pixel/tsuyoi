@@ -167,8 +167,8 @@ const MAXDRAW=11; // 最初の1回＋引き直し10回
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-let myId=null;try{myId=sessionStorage.getItem("tsy-id")}catch(e){}
-if(!myId){myId=Math.random().toString(36).slice(2,10);try{sessionStorage.setItem("tsy-id",myId)}catch(e){}}
+let myId=store.get("tsy-id"); // 端末に保存して、閉じても同じ人として入り直せるようにする
+if(!myId){myId=Math.random().toString(36).slice(2,10);store.set("tsy-id",myId)}
 const q=new URLSearchParams(location.search);
 $("nm").value=store.get("tsy-name")||"";
 $("rc").value=q.get("r")||String(Math.floor(1000+Math.random()*9000));
