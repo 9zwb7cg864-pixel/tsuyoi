@@ -113,7 +113,7 @@ input::placeholder{color:#a99d93}
 .stb{flex:none;min-height:28px;padding:0 12px;border-radius:999px;background:var(--pn);color:var(--ink);border:2px solid var(--ink);font-size:12px;font-weight:900;box-shadow:0 3px 0 rgba(0,0,0,.25)}
 .stgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .stpick{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:14px;background:#fff;border:2px solid var(--line);color:var(--ink)}
-.stpick img{width:100%;max-width:74px;aspect-ratio:1;object-fit:contain}.stpick span{font-size:11px;font-weight:900;white-space:nowrap}
+.stpick img{width:100%;max-width:64px;aspect-ratio:1;object-fit:contain}.stpick span{font-size:10px;font-weight:900;line-height:1.25;text-align:center;min-height:2.5em;display:flex;align-items:center}
 .stampfx{position:fixed;top:15%;z-index:250;pointer-events:none;display:flex;flex-direction:column;align-items:flex-start;gap:3px;animation:stampfx 2.6s ease-out both}
 .stbub{display:flex;flex-direction:column;align-items:center;background:var(--pn);border:3px solid var(--ink);border-radius:22px 22px 22px 6px;padding:8px 14px 10px;box-shadow:0 5px 0 rgba(0,0,0,.3)}
 .stbub img{width:clamp(96px,30vw,140px);aspect-ratio:1;object-fit:contain}
@@ -288,7 +288,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22t"; // 新しい版を出したら変える
+const VER="2026-11-22u"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -492,7 +492,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&SND.ctx&&
 document.addEventListener("dblclick",e=>e.preventDefault(),{passive:false});
 function snd(n,vol=1,delay=0){if(!SND.on||!SND.ctx||!SND.buf[n])return;try{if(SND.ctx.state!=="running")SND.ctx.resume().catch(()=>{});const a=SND.ctx.createBufferSource(),g=SND.ctx.createGain();a.buffer=SND.buf[n];g.gain.value=vol;a.connect(g);g.connect(SND.ctx.destination);a.start(SND.ctx.currentTime+delay)}catch(e){}}
 // スタンプ（チャットには残さず、全員の画面にポンと出す）
-const STAMPS=["つよい！","うそだろ","ナイス！","ブラフでしょ","はやく〜","やばい","おねがい","草"];
+const STAMPS=["つよい！","うそだろ","ナイス！","ブラフでしょ","はやく〜","やばい","おねがい","草","え！？これ勝つの？","これは強い","異議あり！","ずるい！","勝ったな","終わった…","いい記事引いた","引き直せばよかった"];
 let stampAt=0;
 const stImg=k=>`<img src="${JUDGE_URL}st/${k}" alt="" onerror="this.remove()">`;
 function sendStamp(k){const n=Date.now();if(n-stampAt<1500)return;stampAt=n;send({t:"stamp",r:R,k})}
