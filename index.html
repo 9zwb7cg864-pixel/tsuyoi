@@ -207,6 +207,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .cbtn span{font:400 13px var(--fn);white-space:nowrap;color:var(--t);width:70%;aspect-ratio:1;display:grid;place-items:center;border-radius:50%;border:2px dashed color-mix(in srgb,var(--t) 45%,transparent)}
 .cbtn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}.cbtn:disabled{opacity:.35}
 .cbtn.c50{--c:#d7372b;--t:#fff7ec}.cbtn.c100{--c:#ffcf3f}.cbtn.c500{--c:#1a1412;--t:#ffcf3f}
+.pbar.hasstk{position:relative}.pbar.hasstk>.av{visibility:hidden}
+.stk{position:absolute;left:9px;bottom:10px;width:42px;height:0;pointer-events:none}
+.sc{position:absolute;left:0;width:42px;height:13px;border-radius:50%;border:1.5px solid var(--ink);background:repeating-linear-gradient(90deg,var(--c) 0 7px,var(--m) 7px 11px)}
+.sc.top{background:radial-gradient(ellipse at center,var(--c) 0 46%,transparent 47%),repeating-conic-gradient(var(--c) 0 30deg,var(--m) 30deg 60deg)}
+.sc.top::after{content:"";position:absolute;inset:2.5px 8px;border-radius:50%;border:1px dashed var(--r)}
+.sc.c10{--c:#fbf5e8;--m:#b9ad98;--r:rgba(26,20,18,.45)}.sc.c50{--c:#d7372b;--m:#fff7ec;--r:rgba(255,247,236,.7)}.sc.c100{--c:#ffcf3f;--m:#fff7ec;--r:rgba(26,20,18,.45)}.sc.c500{--c:#1a1412;--m:#fff7ec;--r:rgba(255,207,63,.8);border-color:#000}
+.sc.new{animation:scdrop .18s ease-out}
+@keyframes scdrop{from{transform:translateY(-22px);opacity:0}}
 .quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .quick button{min-height:36px;border-radius:999px;background:#fff;border:2px solid var(--line);color:var(--ink);font-size:12.5px;font-weight:700}
 .left{font-size:12.5px;color:var(--sub);text-align:center}.left b{font:400 16px var(--fn);color:var(--ink)}
@@ -268,7 +276,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22k"; // 新しい版を出したら変える
+const VER="2026-11-22l"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -704,7 +712,7 @@ function render(){
     B.log.forEach(([i,t],k)=>{const key="a"+R+":"+k;if(/オールイン/.test(t)&&!fxDone.has(key)){fxDone.add(key);if(fresh())fxAllin((players.get(i)||{}).name||"",st[i])}});
     if(B.log.length&&!big)h+=`<div class="log">${B.log.slice(-3).map(([i,t])=>nm(i)+"："+t).join("　→　")}</div>`;
   }
-  let dock="";
+  let dock="",stackAmt=null;
   const waitNames=ro.filter(i=>!x.picks[i]).map(nm).join("・");
   if(!both){
     if(isP){
@@ -725,7 +733,7 @@ function render(){
         const capped=!ro.some(i=>i!==myId&&!B.folded.has(i)&&B.c[i]<st[i]),room_=my-Math.max(need,0);
         const minA=Math.min(10,room_),maxA=room_;
         if(local.amt==null||local.amt>maxA||local.amt<minA)local.amt=Math.min(maxA,Math.max(minA,Math.min(100,maxA)));
-        const canRaise=!capped&&room_>0&&!wait;
+        const canRaise=!capped&&room_>0&&!wait;if(canRaise)stackAmt=local.amt;
         const p=maxA>minA?Math.round((local.amt-minA)/(maxA-minA)*100):100;
         const raiseLbl=need>0?"レイズ":"ベット",allin=local.amt>=maxA;
         dock=`<div class="msg">あなたの番です。ほかの人の記事は見えません</div>`;
@@ -761,7 +769,7 @@ function render(){
     }
   }
   h+=`</div>`;
-  if(isP)h+=bar(myId);
+  if(isP)h+=stackAmt==null?bar(myId):bar(myId).replace('<div class="pbar">',`<div class="pbar hasstk"><div class="stk" id="stk">${stackHTML(stackAmt)}</div>`);
   if(dock)h+=`<div class="dock">${dock}</div>`;
   paint(g,h);
 }
@@ -795,11 +803,15 @@ function paint(g,h){
   g.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{R_(R).votes[myId]=b.dataset.v;send({t:"vote",r:R,for:b.dataset.v});render()});
 }
 let dragging=false;
+function stackHTML(v,drop){ // 賭ける枚数を、薄いチップの山にして見せる（500・100・50・10に崩す。多すぎるときは上を省く）
+  const out=[];for(const d of [500,100,50,10]){while(v>=d&&out.length<18){out.push(d);v-=d}}
+  return out.map((d,k)=>`<i class="sc c${d}${k===out.length-1?" top"+(drop?" new":""):""}" style="bottom:${k*5}px"></i>`).join("")}
 function amtUI(){ // チップを足している間は、数字だけ書き換える（画面は作り直さない）
   const cr=$("cr"),ra=$("ra");if(!cr||!ra)return;const mx=Number(cr.dataset.max),v=local.amt,all=v>=mx;
   const av=$("av");av.textContent=v+(all?"（オールイン）":"");av.classList.remove("bump");void av.offsetWidth;av.classList.add("bump");
   ra.dataset.act=all?"allin":"raise";ra.innerHTML=(all?"オールイン":ra.dataset.lbl)+`<small>${all?mx:"+"+v}</small>`;
   cr.querySelectorAll("[data-add]").forEach(b=>b.disabled=all);
+  const sk=$("stk");if(sk)sk.innerHTML=stackHTML(v,true);
 }
 
 const recent=[];
