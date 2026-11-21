@@ -93,6 +93,17 @@ input::placeholder{color:#a99d93}
 .fback{position:absolute;inset:0;border-radius:16px;border:3px solid var(--ink);background:repeating-linear-gradient(45deg,#1a1412 0 10px,#2b211d 10px 20px);transform:rotateY(180deg);backface-visibility:hidden}
 .cards.multi .fback{border-radius:12px;border-width:2px}
 @keyframes flip{from{transform:perspective(900px) rotateY(180deg)}to{transform:perspective(900px) rotateY(0)}}
+.icbtn.off{opacity:.45;text-decoration:line-through}
+@media(max-width:420px){.ingame .logo b{font-size:13px}.ingame .top{gap:5px;padding-left:10px;padding-right:10px}.ingame #topr{gap:4px!important}.ingame .icbtn{padding:0 7px;min-width:30px}}
+.sheetin{max-height:88dvh;overflow-y:auto}
+.peek .stp{flex:none;font-style:normal;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;border:1.5px solid var(--gold);color:var(--gold)}
+.stamps{flex:none;display:flex;gap:6px;overflow-x:auto;padding:6px 10px;scrollbar-width:none}.stamps::-webkit-scrollbar{display:none}
+.stamps button{flex:none;font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:999px;background:var(--pn);border:1.5px solid var(--line);color:var(--ink);white-space:nowrap}
+.stgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stgrid .big{min-height:46px;font-size:14px}
+.stampfx{position:fixed;top:17%;z-index:250;pointer-events:none;display:flex;flex-direction:column;align-items:flex-start;gap:3px;animation:stampfx 2.6s ease-out both}
+.stampfx b{font:400 clamp(20px,6vw,28px)/1.2 var(--fn);background:var(--pn);color:var(--ink);border:3px solid var(--ink);border-radius:18px 18px 18px 4px;padding:8px 14px;box-shadow:0 5px 0 rgba(0,0,0,.3);white-space:nowrap}
+.stampfx span{font-size:11.5px;font-weight:700;color:var(--ink);background:var(--gold);border-radius:999px;padding:2px 9px;margin-left:4px}
+@keyframes stampfx{0%{opacity:0;transform:translateY(24px) scale(.5) rotate(-8deg)}10%{opacity:1;transform:scale(1.12) rotate(3deg)}18%{transform:none}80%{opacity:1;transform:translateY(-14px)}100%{opacity:0;transform:translateY(-40px)}}
 .fxcv{position:fixed;inset:0;width:100%;height:100%;z-index:320;pointer-events:none}
 .thud{animation:thud .4s cubic-bezier(.2,.8,.3,1)}
 @keyframes thud{0%{transform:none}18%{transform:translate(-5px,9px) scale(.985)}40%{transform:translate(4px,-4px)}62%{transform:translate(-2px,2px)}100%{transform:none}}
@@ -227,7 +238,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       <div class="lbl">遊び方</div>
       <ul class="rules">
         <li><i>1</i><span>全員が記事を引く。気に入らなければ引き直し（10回まで。前の記事には戻れない）</span></li>
-        <li><i>2</i><span>全員が決めたら、ほかの人の記事が見えないまま順番に賭ける。チップは1000枚、毎回50枚の参加料。0枚になったら脱落、最後の1人が優勝（勝ち抜け）。チェック・ベット・コール・レイズ・フォールド、ブラフもあり</span></li>
+        <li><i>2</i><span>全員が決めたら、ほかの人の記事が見えないまま順番に賭ける。チップは1000枚、参加料は50枚から、3戦ごとに上がる。0枚になったら脱落、最後の1人が優勝（勝ち抜け）。チェック・ベット・コール・レイズ・フォールド、ブラフもあり</span></li>
         <li><i>3</i><span>賭けが決まったら、審判が名前を伏せた記事からいちばん強そうなものを選ぶ。勝った人がポットを取る</span></li>
       </ul>
     </div>
@@ -235,17 +246,18 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   </div>
 
   <div class="table hide" id="game"></div>
-  <button class="peek hide" id="peek" aria-label="チャットを開く"><span id="pk">チャットはここ。タップで開く</span><b>開く</b></button>
+  <button class="peek hide" id="peek" aria-label="チャットを開く"><span id="pk">チャットはここ。タップで開く</span><i class="stp">スタンプ</i><b>開く</b></button>
 </div>
 <aside class="chat hide" id="chat">
   <div class="chath"><div><b>チャット</b><br><span id="who"></span></div><button class="icbtn x" id="cx">閉じる</button></div>
   <div class="msgs" id="log"></div>
+  <div class="stamps" id="stamps"></div>
   <form class="cf" id="cf"><input id="ci" maxlength="200" placeholder="メッセージ" autocomplete="off"><button id="cs">送る</button></form>
 </aside>
 </div>
 <script>
 {
-const VER="2026-11-22e"; // 新しい版を出したら変える
+const VER="2026-11-22f"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -275,7 +287,7 @@ const rounds={};
 let R=1;
 let local={r:0,draws:0,cur:null,decided:false,busy:false,amt:null};
 const R_=r=>rounds[r]||(rounds[r]={picks:{},votes:{},draws:{},acts:[],reset:false});
-const ANTE=50,START=1000;
+const ANTE=50,START=1000,ANTES=[50,100,200,300,500],anteOf={},anteUp={}; // 参加料は大会の中で3戦ごとに上がる
 const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h};
 const av=id=>{const p=players.get(id)||{name:"?"};return `<div class="av" style="background:hsl(${hue(p.name)} 70% 72%)">${esc((p.name||"?").slice(0,1))}</div>`};
 const nm=id=>esc((players.get(id)||{}).name||"?");
@@ -295,8 +307,8 @@ function enterRoom(rm,ord){
   if(ord)fixedOrder=ord;
   for(const i of fixedOrder)if(!players.has(i))players.set(i,{name:(want.get(i)||{}).name||"入室待ち",first:0,last:0});
   try{history.replaceState(null,"","?r="+room+(fixedOrder.length===3?"&o="+fixedOrder.join("."):""))}catch(e){}
-  $("home").classList.add("hide");$("game").classList.remove("hide");$("peek").classList.remove("hide");$("peek").onclick=()=>setChat(true);$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
-  $("topr").innerHTML=`<button class="icbtn" id="rl">${myRole==="judge"?"審判中":"対戦中"}</button>${store.get("tsy-owner")?`<button class="icbtn" id="ad">管理</button>`:""}<button class="icbtn" id="cp">招待</button><button class="icbtn" id="lv">退室</button>`;
+  $("home").classList.add("hide");$("game").classList.remove("hide");$("peek").classList.remove("hide");$("peek").onclick=e=>e.target.closest(".stp")?stampSheet():setChat(true);$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
+  $("topr").innerHTML=`<button class="icbtn" id="rl">${myRole==="judge"?"審判中":"対戦中"}</button>${store.get("tsy-owner")?`<button class="icbtn" id="ad">管理</button>`:""}<button class="icbtn${SND.on?"":" off"}" id="sd" aria-label="効果音">♪</button><button class="icbtn" id="cp">招待</button><button class="icbtn" id="lv">退室</button>`;
   $("rl").onclick=()=>setRole(myRole==="judge"?"player":"judge");
   $("lv").onclick=async()=>{ // 退室：みんなに知らせてトップに戻る（AI審判を入れていたら一緒に外す）
     if(!confirm("部屋から出ますか？"))return;
@@ -304,6 +316,8 @@ function enterRoom(rm,ord){
     store.set("tsy-ai-"+room,"0");store.set("tsy-cpu-"+room,"[]");left_=true;location.href=location.pathname;
   };
   if($("ad"))$("ad").onclick=ownerSheet;
+  $("sd").onclick=()=>{SND.on=!SND.on;store.set("tsy-snd",SND.on?"1":"0");$("sd").classList.toggle("off",!SND.on);toast(SND.on?"効果音：あり":"効果音：なし");if(SND.on)snd("bet")};
+  $("stamps").innerHTML=STAMPS.map((t,i)=>`<button type="button" data-s="${i}">${t}</button>`).join("");$("stamps").onclick=e=>{const b=e.target.closest("[data-s]");if(b)sendStamp(STAMPS[b.dataset.s])};
   if(store.get("tsy-owner")){try{cpus=JSON.parse(store.get("tsy-cpu-"+room)||"[]")}catch(e){cpus=[]}if(cpus.length)setTimeout(()=>{cpus.forEach(c=>sendCpu(c,{t:"hello",r:R}));cpuBeatOn()},1500)}
   if(store.get("tsy-owner")&&store.get("tsy-ai-"+room)==="1")setTimeout(()=>setAi(true),1500);
   $("cp").onclick=()=>{ // 招待：対戦者として／審判として、の2種類のリンク
@@ -369,10 +383,14 @@ function addCpu(){if(seats().length>=MAXP){toast("席がいっぱいです（6�
   const used=new Set(cpus.map(c=>c.name)),name=CPUNAMES.find(n=>!used.has(n))||("CPU"+(cpus.length+1));
   const c={id:"cpu-"+myId+"-"+Date.now().toString(36),name};cpus.push(c);cpuSave();sendCpu(c,{t:"join",r:R});cpuBeatOn();render()}
 function clearCpus(){cpus.forEach(c=>sendCpu(c,{t:"leave",r:R}));cpus=[];cpuSave();cpuBeatOn();render()}
+const kicked=new Map(); // オーナーが席から外した人。賭けの途中なら、代わりにチェックかフォールドを出す
+function postAs(id,m){const p=players.get(id)||{};m.id=id;m.name=p.name||"";m.role=p.role||"player";return fetch(RELAY+"tsyoi-"+room,{method:"POST",body:JSON.stringify(m)}).catch(()=>{})}
+function kick(id){if(!players.has(id))return;kicked.set(id,Date.now()/1000);postAs(id,{t:"leave",r:R})}
+function kickTick(B){if(!B||B.done||!kicked.has(B.to))return;const id=B.to,k="k"+R+":"+R_(R).acts.length+id,t=Date.now();if(cpuBusy[k]&&t-cpuBusy[k]<8000)return;cpuBusy[k]=t;postAs(id,{t:"act",r:R,a:B.H-B.c[id]>0?"fold":"check",amt:0})}
 function ownerSheet(){
   const d=document.createElement("div");d.className="sheet";
-  d.innerHTML=`<div class="sheetin"><b>管理（オーナーだけ）</b><button class="big pri" data-k="ai">${aiOn?"AI審判を外す":"AI審判を入れる"}</button><button class="big sec" data-k="cpu">CPUを1人入れる</button>${cpus.length?`<button class="big sec" data-k="clr">CPUを全員外す（${cpus.length}人）</button>`:""}<div class="two"><button class="big ghost" data-k="t1">演出：オールイン</button><button class="big ghost" data-k="t2">演出：優勝</button></div><button class="big ghost" data-k="x">閉じる</button></div>`;
-  d.onclick=e=>{const b=e.target.closest("button");if(!b&&e.target!==d)return;const k=b&&b.dataset.k;if(k==="ai")setAi(!aiOn);else if(k==="cpu")addCpu();else if(k==="clr")clearCpus();else if(k==="t1")fxAllin(me,1000);else if(k==="t2")fxChamp(me,1,1);d.remove()};
+  d.innerHTML=`<div class="sheetin"><b>管理（オーナーだけ）</b><button class="big pri" data-k="ai">${aiOn?"AI審判を外す":"AI審判を入れる"}</button><button class="big sec" data-k="cpu">CPUを1人入れる</button>${cpus.length?`<button class="big sec" data-k="clr">CPUを全員外す（${cpus.length}人）</button>`:""}${order().filter(i=>i!==myId&&!i.startsWith("ai-")&&!cpus.some(c=>c.id===i)).map(i=>`<button class="big ghost" data-kick="${i}">${nm(i)} を席から外す</button>`).join("")}<div class="two"><button class="big ghost" data-k="t1">演出：オールイン</button><button class="big ghost" data-k="t2">演出：優勝</button></div><button class="big ghost" data-k="x">閉じる</button></div>`;
+  d.onclick=e=>{const b=e.target.closest("button");if(!b&&e.target!==d)return;const k=b&&b.dataset.k;if(b&&b.dataset.kick)kick(b.dataset.kick);else if(k==="ai")setAi(!aiOn);else if(k==="cpu")addCpu();else if(k==="clr")clearCpus();else if(k==="t1")fxAllin(me,1000);else if(k==="t2")fxChamp(me,1,1);d.remove()};
   document.body.appendChild(d);
 }
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -434,6 +452,20 @@ function hello(){send({t:"hello",r:R,draws:local.r===R?local.draws:0})}
 // ---- 演出（オールイン・優勝）。今起きたことだけ（入り直しで昔の出来事を再生しない） ----
 let lastEvt=0;const fxDone=new Set();
 const fresh=()=>Date.now()/1000-lastEvt<12;
+// 効果音（Kenney の CC0 素材）。最初のタップで鳴らせるようになる
+const SND={ctx:null,buf:{},on:store.get("tsy-snd")!=="0"};
+function sndInit(){if(SND.ctx)return;try{SND.ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return}
+  ["bet","call","raise","check","fold","flip","chips","allin","win","champ","turn","stamp"].forEach(n=>fetch("snd/"+n+".mp3").then(r=>r.arrayBuffer()).then(b=>new Promise((ok,ng)=>SND.ctx.decodeAudioData(b,ok,ng))).then(a=>{SND.buf[n]=a}).catch(()=>{}))}
+addEventListener("pointerdown",()=>{sndInit();if(SND.ctx&&SND.ctx.state==="suspended")SND.ctx.resume()},{passive:true});
+function snd(n,vol=1,delay=0){if(!SND.on||!SND.ctx||!SND.buf[n])return;try{const a=SND.ctx.createBufferSource(),g=SND.ctx.createGain();a.buffer=SND.buf[n];g.gain.value=vol;a.connect(g);g.connect(SND.ctx.destination);a.start(SND.ctx.currentTime+delay)}catch(e){}}
+// スタンプ
+const STAMPS=["💪 つよい！","😱 うそだろ","👏 ナイス！","🤥 ブラフでしょ","⏰ はやく〜","🔥 やばい","🙏 おねがい","🌱 草"];
+let stampAt=0;
+function sendStamp(t){const n=Date.now();if(n-stampAt<1500)return;stampAt=n;send({t:"chat",r:R,text:t,st:1})}
+function showStamp(name,text){const d=document.createElement("div");d.className="stampfx";d.style.left=(6+Math.random()*40)+"%";d.innerHTML=`<b>${esc(text)}</b><span>${esc(name)}</span>`;document.body.appendChild(d);setTimeout(()=>d.remove(),2600);snd("stamp",.7)}
+function stampSheet(){const d=document.createElement("div");d.className="sheet";
+  d.innerHTML=`<div class="sheetin"><b>スタンプ</b><div class="stgrid">${STAMPS.map((t,i)=>`<button class="big sec" data-s="${i}">${t}</button>`).join("")}</div><button class="big ghost">閉じる</button></div>`;
+  d.onclick=e=>{const b=e.target.closest("button");if(!b&&e.target!==d)return;if(b&&b.dataset.s)sendStamp(STAMPS[b.dataset.s]);d.remove()};document.body.appendChild(d)}
 // 粒（チップ・紙吹雪・きらめき）は1枚のキャンバスに描く
 const FX={cv:null,ctx:null,ps:[],raf:0,last:0};
 function fxAdd(p){
@@ -466,7 +498,7 @@ function fxAllin(name,amt){ // 閃光 → 斜めの帯が切り込む → 金文
   d.innerHTML=`<div class="ai2dim"></div><div class="ai2band"><div class="ai2lines"></div><div class="ai2in"><div class="ai2name">${esc(name)}</div><div class="ai2word">${[..."オールイン"].map((ch,i)=>`<span style="--i:${i}">${ch}</span>`).join("")}</div>${amt>0?`<div class="ai2amt"><i class="chip"></i><b>0</b><em>枚 ぜんぶ</em></div>`:""}</div></div><div class="ai2flash"></div>`;
   document.body.appendChild(d);
   const W=innerWidth,H=innerHeight,cols=["#ffcf3f","#ffcf3f","#ffcf3f","#fbf5e8","#d7372b"];
-  setTimeout(()=>{fxThud();
+  setTimeout(()=>{fxThud();snd("allin");snd("chips",.9,.08);
     for(let k=0;k<54;k++){const a=Math.random()*6.283,v=260+Math.random()*760;
       fxAdd({k:"chip",x:W/2+(Math.random()-.5)*W*.55,y:H/2+(Math.random()-.5)*50,vx:Math.cos(a)*v,vy:Math.sin(a)*v-280,g:1750,drag:.8,s:6.5+Math.random()*6.5,col:cols[k%cols.length],life:1.9,vf:8+Math.random()*12})}
     const b=d.querySelector(".ai2amt b");if(b){const t0=performance.now(),tick=t=>{const q=Math.min(1,(t-t0)/520);b.textContent=Math.round(amt*(1-Math.pow(1-q,3)));if(q<1&&b.isConnected)requestAnimationFrame(tick)};requestAnimationFrame(tick)}
@@ -482,7 +514,7 @@ function fxChamp(name,cup,times){ // 光の筋の舞台にトロフィーが落�
   const shot=(x,ang,n,sp)=>{for(let k=0;k<n;k++){const a=ang+(Math.random()-.5)*.8,v=sp*(.4+Math.random()*.8);
     fxAdd({k:"conf",x,y:H*.94,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:520,drag:1.5,sw:70,s:6+Math.random()*7,col:cols[k%cols.length],life:5+Math.random()*2.5})}};
   const spark=()=>fxAdd({k:"spark",x:W/2+(Math.random()-.5)*W*.8,y:H*.4+(Math.random()-.5)*H*.5,g:0,vr:1.2,s:9+Math.random()*15,col:Math.random()<.5?"#fffbe0":"#ffe27a",life:.6+Math.random()*.6});
-  T.push(setTimeout(()=>{fxThud();shot(0,-1.05,95,1650);shot(W,-2.09,95,1650);for(let k=0;k<10;k++)spark()},900));
+  T.push(setTimeout(()=>{fxThud();snd("champ");shot(0,-1.05,95,1650);shot(W,-2.09,95,1650);for(let k=0;k<10;k++)spark()},900));
   T.push(setTimeout(()=>{shot(0,-1.2,55,1450);shot(W,-1.94,55,1450)},2300));
   const rain=setInterval(()=>{for(let k=0;k<4;k++)fxAdd({k:"conf",x:Math.random()*W,y:-20,vx:(Math.random()-.5)*70,vy:70+Math.random()*130,g:170,drag:.9,sw:95,s:6+Math.random()*7,col:cols[(Math.random()*cols.length)|0],life:8})},120);
   const twinkle=setInterval(spark,230);
@@ -493,10 +525,12 @@ function handle(m,time){
   if(!m||typeof m.id!=="string")return;
   const p=players.get(m.id)||{name:"",first:time,last:0};
   if(!p.first)p.first=time;
-  if(m.t==="act"||m.t==="vote")lastEvt=Math.max(lastEvt,time);
+  if(m.t==="act"||m.t==="vote"||m.t==="pick")lastEvt=Math.max(lastEvt,time);
+  if((m.t==="join"||m.t==="hello")&&kicked.has(m.id)&&time>kicked.get(m.id)+5)kicked.delete(m.id);
+  if(m.t==="act"&&Date.now()/1000-time<10)snd({fold:"fold",check:"check",call:"call",raise:"raise",allin:"raise"}[m.a]||"bet");
   p.name=String(m.name||"").slice(0,12);p.last=Math.max(p.last,time);if(m.role)p.role=String(m.role);players.set(m.id,p);
   const r=Number(m.r)||1;
-  if(m.t==="chat")addmsg(p.name,String(m.text||"").slice(0,200),m.id===myId);
+  if(m.t==="chat"){addmsg(p.name,String(m.text||"").slice(0,200),m.id===myId);if(m.st&&Date.now()/1000-time<10&&STAMPS.includes(m.text))showStamp(p.name,m.text)}
   else if(m.t==="hello"||m.t==="draw"){R_(r).draws[m.id]=Math.max(R_(r).draws[m.id]||0,Number(m.draws)||0)}
   else if(m.t==="pick"&&m.a&&typeof m.a.title==="string"){R_(r).picks[m.id]=m.a;R_(r).draws[m.id]=Number(m.draws)||MAXDRAW}
   else if(m.t==="vote"&&typeof m.for==="string"){R_(r).votes[m.id]=m.for}
@@ -551,7 +585,7 @@ function card(a,opt={}){
 // 賭け：全員の記事が出そろったら、他の人の記事が見えないまま順番に賭ける（毎戦、最初に賭ける人がずれる）
 function betState(r,ro,st){
   const x=R_(r),n=ro.length,c={},folded=new Set();
-  ro.forEach(i=>{c[i]=Math.min(ANTE,st[i])});
+  const ANT=anteOf[r]||ANTE;ro.forEach(i=>{c[i]=Math.min(ANT,st[i])});
   const can=i=>!folded.has(i)&&c[i]<st[i]; // まだ動ける人（降りていない・全部出していない）
   let H=Math.max(...ro.map(i=>c[i]));
   let need=new Set(ro.filter(can));
@@ -592,16 +626,17 @@ function outcome(r,ro,j,st){
   return{w:v,d,gain:d[v],how:"審判 "+esc((players.get(vid)||{}).name||"?")+" さんの判定"};
 }
 function history_(j){ // R戦の始まりまでのチップと勝ち数。勝ち抜け：0枚になったら脱落、最後の1人で優勝して次の大会へ
-  let st={};const wins={},champs={};let cup=1;const S=i=>{if(st[i]==null)st[i]=START};
+  let st={};const wins={},champs={};let cup=1,cs=1;const S=i=>{if(st[i]==null)st[i]=START};
   for(let r=1;r<=R;r++){
-    if(rounds[r]&&rounds[r].reset){st={};cup++}
+    if(rounds[r]&&rounds[r].reset){st={};cup++;cs=r}
+    anteOf[r]=ANTES[Math.min(ANTES.length-1,Math.floor((r-cs)/3))];anteUp[r]=r>cs&&(r-cs)%3===0&&(r-cs)/3<ANTES.length;
     if(r===R)break;
     const x=rounds[r];if(!x)continue;
     const ro=roster(r);ro.forEach(S);
     const z=outcome(r,ro,j,st);if(!z)continue;
     wins[z.w]=(wins[z.w]||0)+1;ro.forEach(i=>st[i]+=z.d[i]);
     const ks=Object.keys(st),alive=ks.filter(i=>st[i]>0);
-    if(ks.length>=2&&alive.length===1){champs[alive[0]]=(champs[alive[0]]||0)+1;st={};cup++}
+    if(ks.length>=2&&alive.length===1){champs[alive[0]]=(champs[alive[0]]||0)+1;st={};cup++;cs=r+1}
   }
   const busted=new Set(Object.keys(st).filter(i=>st[i]<=0));
   return{st:new Proxy(st,{get:(o,k)=>o[k]==null?START:o[k]}),raw:st,wins,champs,cup,busted};
@@ -627,10 +662,11 @@ function render(){
     return paint(g,h);
   }
   const H=history_(J),wins=H.wins,st=H.st;
-  const cupTag=`<div class="cup">第${H.cup}大会　残り${Object.keys(H.raw).length?Object.keys(H.raw).filter(i=>H.raw[i]>0).length:ro.length}人</div>`;
+  const cupTag=`<div class="cup">第${H.cup}大会　残り${Object.keys(H.raw).length?Object.keys(H.raw).filter(i=>H.raw[i]>0).length:ro.length}人　参加料${anteOf[R]||ANTE}枚${anteUp[R]?"（アップ！）":""}</div>`;
   const both=allPicked(R),B=both?betState(R,ro,st):null;
   const Z=B&&B.done?outcome(R,ro,J,st):null;
   if(cpus.length)cpuTick(ro,x,both,B,st);
+  if(kicked.size)kickTick(B);
   const left=i=>Z?st[i]+Z.d[i]:B?st[i]-B.c[i]:st[i];
   const lastAct=i=>{if(!B)return"";for(let k=B.log.length-1;k>=0;k--)if(B.log[k][0]===i)return B.log[k][1];return""};
   const stat=i=>{
@@ -670,7 +706,7 @@ function render(){
     if(isP){
       h+=`<div class="cards duo"><div class="cw"><div class="tag">あなた</div>${card(x.picks[myId])}</div><div class="cw"><div class="tag">ほかの${others.length}人</div><div class="back"><div><b>？</b><span>賭けが終わると見えます</span></div></div></div></div>`;
       const my=st[myId]-B.c[myId],need=Math.min(B.H-B.c[myId],my),turn=B.to===myId,wait=local.wait===x.acts.length;
-      if(turn){
+      if(turn){const tk="t"+R+":"+x.acts.length;if(!fxDone.has(tk)){fxDone.add(tk);if(fresh())snd("turn",.6)}
         const capped=!ro.some(i=>i!==myId&&!B.folded.has(i)&&B.c[i]<st[i]),room_=my-Math.max(need,0);
         const minA=Math.min(10,room_),maxA=room_;
         if(local.amt==null||local.amt>maxA||local.amt<minA)local.amt=Math.min(maxA,Math.max(minA,Math.min(100,maxA)));
@@ -689,6 +725,8 @@ function render(){
   }else{
     const blind=!isP&&!Z;
     const show=Z&&Z.fold?ro:B.alive,ord=blindOrder(show);
+    if(!fxDone.has("f"+R)){fxDone.add("f"+R);if(fresh())ord.forEach((_,k)=>snd("flip",.8,k*.6))}
+    if(Z&&!fxDone.has("w"+R)){fxDone.add("w"+R);if(fresh())snd("win",.9)}
     if(Z)h+=`<div class="banner"><b>${nm(Z.w)} の勝ち <em>+${Z.gain}</em></b><span>${Z.how}</span></div>`;
     h+=`<div class="cards ${ord.length>2?"multi":"duo"}">`+ord.map((i,k)=>{const lab=LAB[k];
       return `<div class="cw"><div class="tag">${blind?"記事 "+lab:lab+"："+nm(i)+(i===myId?"（あなた）":"")+"　"+(x.draws[i]||"?")+"回目"+(B.folded.has(i)?"（フォールド）":"")}</div><div class="flipbox" style="--d:${(k*0.6).toFixed(1)}s"><div class="fback"></div>${card(x.picks[i],{win:Z&&Z.w===i})}</div></div>`}).join("")+`</div>`;
