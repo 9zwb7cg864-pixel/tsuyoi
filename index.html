@@ -27,9 +27,10 @@ input::placeholder{color:#a99d93}
 @media(min-width:980px){.wrap.ingame{max-width:960px;grid-template-columns:minmax(0,1fr) 320px;gap:16px;padding:0 16px}}
 .col{display:flex;flex-direction:column;min-height:0;height:100dvh}
 .top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:max(12px,env(safe-area-inset-top)) 16px 8px}
-.logo{font:400 22px/1 var(--fn);letter-spacing:.01em;display:flex;align-items:baseline;gap:6px}
-.logo b{font:400 20px/1 var(--fn)}.logo small{font:600 11px var(--fn);color:var(--sub)}
-.icbtn{height:38px;min-width:38px;padding:0 12px;border-radius:999px;background:transparent;border:2px solid var(--on);color:var(--on);font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;position:relative}
+.logo{white-space:nowrap;flex:none;font:400 22px/1 var(--fn);letter-spacing:.01em;display:flex;align-items:baseline;gap:6px}
+.logo b{font:400 20px/1 var(--fn)}
+@media(max-width:420px){.logo b{font-size:17px}.icbtn{padding:0 9px;font-size:12px;height:34px}}.logo small{font:600 11px var(--fn);color:var(--sub)}
+.icbtn{height:36px;min-width:36px;padding:0 11px;white-space:nowrap;flex:none;border-radius:999px;background:transparent;border:2px solid var(--on);color:var(--on);font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;position:relative}
 .badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--gold);color:var(--ink);font:700 11px/18px var(--fn);text-align:center;padding:0 5px}
 /* ホーム */
 .home{flex:1;min-height:0;overflow-y:auto;padding:8px 16px 20px;display:flex;flex-direction:column;gap:14px}
@@ -126,7 +127,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </style></head><body>
 <div class="wrap" id="wrap">
 <div class="col">
-  <header class="top"><div class="logo"><b>ツヨペディア</b></div><div class="row" id="topr" style="display:flex;gap:8px"></div></header>
+  <header class="top"><div class="logo"><b>ツヨペディア</b></div><div class="row" id="topr" style="display:flex;gap:6px;flex-wrap:nowrap"></div></header>
 
   <div class="home" id="home">
     <div><h1 class="title">Wikipediaの記事で、<br>強さ勝負。</h1><p class="lead">ランダムに引いた記事で戦う3人用のゲーム。2人が賭けて、1人が名前を伏せて判定します。</p></div>
@@ -194,7 +195,7 @@ $("fr").onclick=()=>{$("frbox").classList.toggle("hide");if(!$("frbox").classLis
 $("enter").onclick=()=>enterRoom($("rc").value.trim().replace(/\D/g,"").slice(0,8));
 function needName(){if($("nm").value.trim())return false;$("nm").focus();toast("先に名前を入れてください");return true}
 let myRole="player"; // 部屋の中で「対戦」「審判」を切り替える
-function setRole(r){myRole=r;const b=$("rl");if(b)b.textContent="役職："+(r==="judge"?"審判":"対戦");toast(r==="judge"?"審判になりました":"対戦者になりました");hello()}
+function setRole(r){myRole=r;const b=$("rl");if(b)b.textContent=r==="judge"?"審判中":"対戦中";toast(r==="judge"?"審判になりました":"対戦者になりました");hello()}
 function enterRoom(rm,ord){
   if(needName())return;
   me=$("nm").value.trim().slice(0,12);room=rm;if(!room){$("rc").focus();return}
@@ -203,12 +204,11 @@ function enterRoom(rm,ord){
   for(const i of fixedOrder)if(!players.has(i))players.set(i,{name:(want.get(i)||{}).name||"入室待ち",first:0,last:0});
   try{history.replaceState(null,"","?r="+room+(fixedOrder.length===3?"&o="+fixedOrder.join("."):""))}catch(e){}
   $("home").classList.add("hide");$("game").classList.remove("hide");$("peek").classList.remove("hide");$("peek").onclick=()=>setChat(true);$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
-  $("topr").innerHTML=`<button class="icbtn" id="rl">役職：${myRole==="judge"?"審判":"対戦"}</button>${store.get("tsy-owner")?`<button class="icbtn" id="ai">${aiOn?"AI審判を外す":"AI審判を入れる"}</button>`:""}<button class="icbtn" id="cp">招待</button><button class="icbtn" id="co">チャット<span class="badge hide" id="ub"></span></button>`;
+  $("topr").innerHTML=`<button class="icbtn" id="rl">${myRole==="judge"?"審判中":"対戦中"}</button>${store.get("tsy-owner")?`<button class="icbtn" id="ai">${aiOn?"AIを外す":"AI審判"}</button>`:""}<button class="icbtn" id="cp">招待</button>`;
   $("rl").onclick=()=>setRole(myRole==="judge"?"player":"judge");
   if($("ai"))$("ai").onclick=()=>setAi(!aiOn);
   if(store.get("tsy-owner")&&store.get("tsy-ai-"+room)==="1")setTimeout(()=>setAi(true),1500);
   $("cp").onclick=async()=>{const u=location.origin+location.pathname+"?r="+room;try{await navigator.clipboard.writeText(u);toast("招待リンクをコピーしました")}catch(_){toast(u)}};
-  $("co").onclick=()=>setChat(!chatOpen);
   addEventListener("pagehide",()=>{try{navigator.sendBeacon(RELAY+"tsyoi-"+room,JSON.stringify({t:"leave",r:R,id:myId,name:me}))}catch(e){}});
   connect();setInterval(hello,12000);setInterval(render,5000);render();
 }
@@ -259,7 +259,7 @@ function sendAs(m){m.id=AI_ID;m.name="AI審判";m.role="judge";return fetch(RELA
 function setAi(on){
   aiOn=on;store.set("tsy-ai-"+room,on?"1":"0");clearInterval(aiBeat);
   if(on){sendAs({t:"join",r:R});aiBeat=setInterval(()=>sendAs({t:"hello",r:R}),12000)}else sendAs({t:"leave",r:R});
-  const b=$("ai");if(b)b.textContent=on?"AI審判を外す":"AI審判を入れる";render();
+  const b=$("ai");if(b)b.textContent=on?"AIを外す":"AI審判";render();
 }
 async function aiJudge(ord,picks){ // 持ち主の端末でGeminiに判定してもらい、審判の票として送る
   const key=R+":"+ord.join();if(aiRunning===key)return;aiRunning=key;
@@ -486,10 +486,10 @@ function amtUI(){ // スライダーを動かしている間は、数字だけ�
 }
 
 const recent=[];
-function peekUI(){$("pk").innerHTML=recent.length?recent.slice(-2).map(([n,t])=>`<b>${esc(n)}</b>${esc(t)}`).join("<br>"):"チャットはここ。タップで開く"}
+function peekUI(){$("pk").innerHTML=recent.length?recent.slice(-1).map(([n,t])=>`<b>${esc(n)}</b>${esc(t)}`).join(""):"チャットはここ。タップで開く"}
 function addmsg(n,t,mine){recent.push([n,t]);peekUI();const d=document.createElement("div");d.className="m"+(mine?" me":"");d.innerHTML=`<b>${esc(n)}</b>${esc(t)}`;push(d);if(!mine&&!chatOpen){unread++;badge()}}
 function sysmsg(t){const d=document.createElement("div");d.className="m sys";d.textContent=t;push(d)}
-function push(d){const l=$("log"),bottom=l.scrollHeight-l.scrollTop-l.clientHeight<40;l.appendChild(d);if(bottom)l.scrollTop=l.scrollHeight}
+function push(d){const l=$("log"),bottom=!chatOpen||l.scrollHeight-l.scrollTop-l.clientHeight<80;l.appendChild(d);if(bottom)l.scrollTop=l.scrollHeight}
 $("cf").onsubmit=e=>{e.preventDefault();const t=$("ci").value.trim();if(!t||!room)return;$("ci").value="";send({t:"chat",r:R,text:t.slice(0,200)})};
 addEventListener("resize",badge);
 }
