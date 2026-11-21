@@ -103,6 +103,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .quick button{min-height:36px;border-radius:999px;background:#fff;border:2px solid var(--line);color:var(--ink);font-size:12.5px;font-weight:700}
 .left{font-size:12.5px;color:var(--sub);text-align:center}.left b{font:400 16px var(--fn);color:var(--ink)}
+/* チャットののぞき窓（スマホ：最新の発言を常に表示） */
+.peek{flex:none;display:flex;align-items:center;gap:8px;margin:0 12px 8px;padding:8px 12px;border-radius:14px;background:rgba(26,20,18,.88);color:var(--pn);text-align:left;min-height:44px}
+.peek span{flex:1;min-width:0;font-size:13px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.peek span b{color:var(--gold);margin-right:5px}
+.peek>b{flex:none;font-size:12px;padding:4px 10px;border-radius:999px;background:var(--gold);color:var(--ink)}
+@media(min-width:980px){.peek{display:none!important}}
 /* チャット */
 .chat{display:flex;flex-direction:column;min-height:0;background:var(--pn);color:var(--ink)}
 @media(min-width:980px){.chat{height:calc(100dvh - 24px);margin-top:12px;border-radius:20px}.chat .x{display:none}.chat{box-shadow:0 6px 0 rgba(0,0,0,.25)}}
@@ -145,6 +151,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   </div>
 
   <div class="table hide" id="game"></div>
+  <button class="peek hide" id="peek" aria-label="チャットを開く"><span id="pk">チャットはここ。タップで開く</span><b>開く</b></button>
 </div>
 <aside class="chat hide" id="chat">
   <div class="chath"><div><b>チャット</b><br><span id="who"></span></div><button class="icbtn x" id="cx">閉じる</button></div>
@@ -189,7 +196,7 @@ function enterRoom(rm,ord){
   if(ord)fixedOrder=ord;
   for(const i of fixedOrder)if(!players.has(i))players.set(i,{name:(want.get(i)||{}).name||"入室待ち",first:0,last:0});
   try{history.replaceState(null,"","?r="+room+(fixedOrder.length===3?"&o="+fixedOrder.join("."):""))}catch(e){}
-  $("home").classList.add("hide");$("game").classList.remove("hide");$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
+  $("home").classList.add("hide");$("game").classList.remove("hide");$("peek").classList.remove("hide");$("peek").onclick=()=>setChat(true);$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
   $("topr").innerHTML=`<button class="icbtn" id="cp">招待</button><button class="icbtn" id="co">チャット<span class="badge hide" id="ub"></span></button>`;
   $("cp").onclick=async()=>{const u=location.origin+location.pathname+"?r="+room;try{await navigator.clipboard.writeText(u);toast("招待リンクをコピーしました")}catch(_){toast(u)}};
   $("co").onclick=()=>setChat(!chatOpen);
@@ -442,7 +449,9 @@ function amtUI(){ // スライダーを動かしている間は、数字だけ�
   ra.dataset.act=all?"allin":"raise";ra.innerHTML=(all?"オールイン":ra.dataset.lbl)+`<small>${all?mx:"+"+v}</small>`;
 }
 
-function addmsg(n,t,mine){const d=document.createElement("div");d.className="m"+(mine?" me":"");d.innerHTML=`<b>${esc(n)}</b>${esc(t)}`;push(d);if(!mine&&!chatOpen){unread++;badge()}}
+const recent=[];
+function peekUI(){$("pk").innerHTML=recent.length?recent.slice(-2).map(([n,t])=>`<b>${esc(n)}</b>${esc(t)}`).join("<br>"):"チャットはここ。タップで開く"}
+function addmsg(n,t,mine){recent.push([n,t]);peekUI();const d=document.createElement("div");d.className="m"+(mine?" me":"");d.innerHTML=`<b>${esc(n)}</b>${esc(t)}`;push(d);if(!mine&&!chatOpen){unread++;badge()}}
 function sysmsg(t){const d=document.createElement("div");d.className="m sys";d.textContent=t;push(d)}
 function push(d){const l=$("log"),bottom=l.scrollHeight-l.scrollTop-l.clientHeight<40;l.appendChild(d);if(bottom)l.scrollTop=l.scrollHeight}
 $("cf").onsubmit=e=>{e.preventDefault();const t=$("ci").value.trim();if(!t||!room)return;$("ci").value="";send({t:"chat",r:R,text:t.slice(0,200)})};
