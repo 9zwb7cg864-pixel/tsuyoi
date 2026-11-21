@@ -5,6 +5,7 @@
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="ツヨペディア｜Wikipediaで強さ勝負"><meta name="twitter:description" content="Wikipediaのランダム記事で、強そうな方が勝ち。引き直しは10回まで、相手の記事が見えないままポーカーのように賭けて、審判が判定する3人用ゲーム。"><meta name="twitter:image" content="https://9zwb7cg864-pixel.github.io/tsuyoi/og.png">
 <meta name="description" content="Wikipediaのランダム記事で、強そうな方が勝ち。引き直しは10回まで、相手の記事が見えないままポーカーのように賭けて、審判が判定する3人用ゲーム。">
 <meta name="theme-color" content="#d7372b">
+<link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#d7372b"><meta name="apple-mobile-web-app-title" content="ツヨペディア"><meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -71,6 +72,7 @@ input::placeholder{color:#a99d93}
 .others .pbar{padding:6px 8px;gap:6px}.others .av{width:30px;height:30px}.others .stack{font-size:16px}
 .cup{flex:none;align-self:center;font-size:12px;font-weight:700;color:var(--on);opacity:.85}
 .champ{flex:none;text-align:center;background:var(--gold);color:var(--ink);border:3px solid var(--ink);border-radius:16px;padding:10px;box-shadow:0 6px 0 rgba(0,0,0,.25)}.champ b{display:block;font:400 26px var(--fn)}.champ span{font-size:12px;font-weight:700}
+.upd{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);z-index:200;background:var(--gold);color:var(--ink);border:2px solid var(--ink);border-radius:999px;padding:8px 16px;font-weight:700;font-size:13px;box-shadow:0 4px 0 rgba(0,0,0,.25)}
 .pickn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .cw{display:flex;flex-direction:column;gap:6px;min-height:0}
 .tag{flex:none;font-size:12px;font-weight:700;color:var(--on);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -169,7 +171,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
+const VER="2026-11-21b"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
+setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
+  try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
+    if(!t.includes('const VER="'+VER+'"')&&!document.getElementById("upd")){const d=document.createElement("button");d.id="upd";d.className="upd";d.textContent="新しい版があります。タップで更新";d.onclick=()=>location.reload();document.body.appendChild(d)}}catch(e){}
+},60000);
 const API="https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=random&grnnamespace=0&grnlimit=1&prop=extracts|pageimages|info&exintro=1&explaintext=1&exsentences=3&piprop=thumbnail&pithumbsize=480&inprop=url";
 const MAXDRAW=11; // 最初の1回＋引き直し10回
 const $=id=>document.getElementById(id);
@@ -449,7 +456,7 @@ function render(){
     return lastAct(i);
   };
   const cls=i=>both&&B&&!B.done&&B.to===i?"turn":"";
-  const bar=i=>pbar(i,left(i),{wins:wins[i],txt:stat(i)},cls(i));
+  const bar=i=>pbar(i,left(i),{wins:(wins[i]||0)+(Z&&Z.w===i?1:0),txt:stat(i)},cls(i));
   const others=ro.filter(i=>i!==myId);
   h+=others.length>1?`<div class="others">${others.map(bar).join("")}</div>`:bar(others[0]);
   h+=`<div class="mid">`;
@@ -517,8 +524,24 @@ function render(){
   if(dock)h+=`<div class="dock">${dock}</div>`;
   paint(g,h);
 }
+function morph(a,b){ // 変わったところだけ差し替える（自分の記事などはそのまま残して、ちらつかせない）
+  const A=[...a.childNodes],Bn=[...b.childNodes];
+  for(let k=0;k<Bn.length;k++){const n=Bn[k],o=A[k];
+    if(!o){a.appendChild(n);continue}
+    if(o.nodeType!==n.nodeType||o.nodeName!==n.nodeName){a.replaceChild(n,o);continue}
+    if(n.nodeType===3){if(o.nodeValue!==n.nodeValue)o.nodeValue=n.nodeValue;continue}
+    if(n.nodeType!==1){a.replaceChild(n,o);continue}
+    if(o.outerHTML===n.outerHTML)continue;
+    if(o.classList.contains("card")&&(o.querySelector("h2")||{}).textContent!==(n.querySelector("h2")||{}).textContent){a.replaceChild(n,o);continue} // 別の記事になったときだけ配り直す
+    for(const at of [...o.attributes])if(!n.hasAttribute(at.name))o.removeAttribute(at.name);
+    for(const at of [...n.attributes])if(o.getAttribute(at.name)!==at.value)o.setAttribute(at.name,at.value);
+    if(o.nodeName==="INPUT"&&o.value!==n.value)o.value=n.value;
+    morph(o,n);
+  }
+  for(let k=A.length-1;k>=Bn.length;k--)a.removeChild(A[k]);
+}
 function paint(g,h){
-  if(h===lastH)return;lastH=h;g.innerHTML=h;
+  if(h===lastH)return;lastH=h;const t=document.createElement("template");t.innerHTML=h;morph(g,t.content);
   const bd=$("bd");if(bd)bd.onclick=draw;const bk=$("bk");if(bk)bk.onclick=decide;
   const nx=$("nx");if(nx)nx.onclick=()=>{R++;send({t:"next",r:R});render()};
   const rs=$("rs");if(rs)rs.onclick=()=>{R++;send({t:"next",r:R});send({t:"reset",r:R});render()};
