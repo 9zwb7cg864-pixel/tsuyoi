@@ -257,7 +257,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22f"; // 新しい版を出したら変える
+const VER="2026-11-22g"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -455,7 +455,7 @@ const fresh=()=>Date.now()/1000-lastEvt<12;
 // 効果音（Kenney の CC0 素材）。最初のタップで鳴らせるようになる
 const SND={ctx:null,buf:{},on:store.get("tsy-snd")!=="0"};
 function sndInit(){if(SND.ctx)return;try{SND.ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return}
-  ["bet","call","raise","check","fold","flip","chips","allin","win","champ","turn","stamp"].forEach(n=>fetch("snd/"+n+".mp3").then(r=>r.arrayBuffer()).then(b=>new Promise((ok,ng)=>SND.ctx.decodeAudioData(b,ok,ng))).then(a=>{SND.buf[n]=a}).catch(()=>{}))}
+  ["bet","call","raise","check","fold","flip","chips","allin","win","champ","turn","stamp"].forEach(n=>fetch("snd/"+n+".mp3?2").then(r=>r.arrayBuffer()).then(b=>new Promise((ok,ng)=>SND.ctx.decodeAudioData(b,ok,ng))).then(a=>{SND.buf[n]=a}).catch(()=>{}))}
 addEventListener("pointerdown",()=>{sndInit();if(SND.ctx&&SND.ctx.state==="suspended")SND.ctx.resume()},{passive:true});
 function snd(n,vol=1,delay=0){if(!SND.on||!SND.ctx||!SND.buf[n])return;try{const a=SND.ctx.createBufferSource(),g=SND.ctx.createGain();a.buffer=SND.buf[n];g.gain.value=vol;a.connect(g);g.connect(SND.ctx.destination);a.start(SND.ctx.currentTime+delay)}catch(e){}}
 // スタンプ
