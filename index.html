@@ -1,93 +1,153 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>強そうな方が勝ち｜Wikipediaランダム対戦</title><meta name="robots" content="noindex">
-<meta name="description" content="Wikipediaのランダム記事を引いて、強そうな方が勝ち。引き直しは10回まで、戻れない。">
+<meta name="description" content="Wikipediaのランダム記事を引いて、強そうな方が勝ち。引き直しは10回まで。ポーカーのように賭けて、審判が判定。">
+<meta name="theme-color" content="#0c2a21">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-/* VOICE: 小学生の休み時間のカードバトル。勢いと煽り
-   IDEA: トレーディングカードを引いて場に出す
-   PICTURE: 大きなカード1枚（相手と並ぶと2枚）
-   COLOUR and TYPE: 朱赤の地、生成りのカード、墨の文字。Dela Gothic One＋Zen Kaku Gothic New
-   LAYOUT: 左に場（カード）、右にチャット。600px以下は縦に積む */
-:root{color-scheme:light dark;--bg:light-dark(#d7372b,#3a0f0c);--card:light-dark(#fbf5e8,#1d1513);--ink:light-dark(#1a1412,#f3e9dc);--sub:light-dark(#6b5c55,#b9a79b);--on:#fff7ec;--ac:light-dark(#1a1412,#ffcf3f);--line:light-dark(#e6dccb,#3a2c28)}
-:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+/* VOICE: 夜のカードテーブル。静かで、勝負の瞬間だけ熱い
+   IDEA: ポーカーテーブルの上に、記事のカードとチップが置かれる
+   PICTURE: 中央のカード（自分の1枚／公開後は2枚）と、真ん中のポット
+   COLOUR and TYPE: 深い緑のフェルト、生成りのカード、珊瑚色のボタン、金のチップ。Outfit＋Noto Sans JP
+   LAYOUT: bocchと同じ1列のアプリ型。上に相手、下に自分、いちばん下に操作。広い画面では右にチャット */
+:root{--bg:#0c2a21;--felt:#113a2d;--felt2:#0f3327;--panel:#15402f;--line:rgba(255,255,255,.09);--ink:#f3efe4;--sub:#9fbcaf;--pri:#ff6a4d;--pri2:#ff8f4d;--gold:#ffc94a;--card:#fbf7ee;--cink:#1d1b17;--csub:#6c655a;--f:"Noto Sans JP","Hiragino Sans","Yu Gothic",system-ui,sans-serif;--fn:"Outfit","Noto Sans JP",sans-serif;color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Zen Kaku Gothic New",sans-serif;overflow:hidden;height:100dvh;display:flex;flex-direction:column}
-h1,.big{font-family:"Dela Gothic One",sans-serif;font-weight:400}
-header{flex:none;padding:10px max(3vw,12px) 6px;color:var(--on);display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
-header h1{margin:0;font-size:clamp(20px,3.6vw,32px);line-height:1.05}
-header .info{font-size:13px;opacity:.9}
-main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:12px;padding:4px max(3vw,12px) 6px;width:100%;max-width:1240px;margin:0 auto}
-@media(max-width:860px){main{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 150px;gap:8px}}
-.panel{background:var(--card);border-radius:16px;padding:12px;box-shadow:0 5px 0 rgba(0,0,0,.25);min-height:0;overflow:hidden}
-#stage{display:flex;flex-direction:column}
-#game{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
-.field{display:grid;gap:8px;max-width:420px}
-label{font-size:13px;color:var(--sub)}
-input{font:inherit;font-size:16px;padding:8px 12px;border:2px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);width:100%}
-input:focus,button:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
-button{font:inherit;font-weight:700;min-height:44px;padding:6px 14px;border-radius:12px;border:2px solid var(--ink);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap}
-button.main{background:var(--ink);color:var(--card)}
-#cs{flex:none}
-button:disabled{opacity:.4;cursor:default}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.top{flex:none;justify-content:space-between}
-.cards{flex:1;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.cardw{display:flex;flex-direction:column;gap:6px;min-height:0}
-.cardw>.card,.cardw>.back{flex:1;min-height:0}
-.cardw>button,.cardw>.row,.cardw>.left,.cardw>.note,.cardw>.tag{flex:none}
-.tag{font-size:12px;font-weight:700;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card{display:flex;flex-direction:column;background:var(--card);border:3px solid var(--ink);border-radius:14px;overflow:hidden;box-shadow:0 6px 0 rgba(0,0,0,.28);animation:pop .35s ease-out}
-.card .img{flex:1 1 0;min-height:0;background:var(--line) center/cover no-repeat;display:grid;place-items:center;color:var(--sub);font-size:32px;font-family:"Dela Gothic One"}
-.card .tx{flex:0 1 auto;min-height:0;max-height:75%;overflow-y:auto;padding:8px 10px 10px}
-.card h2{margin:0 0 4px;font-family:"Dela Gothic One";font-weight:400;font-size:clamp(16px,2.6vw,26px);line-height:1.15;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.card p{margin:0 0 4px;font-size:13px;line-height:1.5;color:var(--ink)}
-.card a,.card .note{font-size:12px;color:var(--sub)}
-.card.win{border-color:var(--ac);box-shadow:0 0 0 4px var(--ac),0 6px 0 rgba(0,0,0,.28)}
-.back{border:3px dashed var(--line);border-radius:14px;display:grid;place-items:center;text-align:center;color:var(--sub);padding:10px}
-.back .big{font-size:clamp(16px,2.4vw,22px)}
-@keyframes pop{from{transform:translateY(10px) scale(.97);opacity:0}}
-@media(prefers-reduced-motion:reduce){.card{animation:none}}
-.left{font-size:13px}.left b{font-size:18px;font-family:"Dela Gothic One";font-weight:400}
-.res{font-family:"Dela Gothic One";font-size:clamp(20px,3.6vw,34px);line-height:1.1}
-.note{font-size:13px;color:var(--sub)}
-.score{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:13px}
-.chat{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:6px}
-.chat .big{font-size:16px}
-.log{overflow-y:auto;display:grid;gap:4px;align-content:start;padding-right:4px}
-.msg{font-size:14px;overflow-wrap:anywhere}.msg b{margin-right:6px}.msg.sys{color:var(--sub);font-size:12px}
-.msg.me b{color:light-dark(#b3261e,#ffcf3f)}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2fbf71;margin-right:4px}.dot.off{background:#999}
+body{margin:0;background:radial-gradient(120% 70% at 50% 40%,#14473a 0%,var(--bg) 70%);color:var(--ink);font:15px/1.5 var(--f);overflow:hidden;height:100dvh;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.38;cursor:default}
+input{font:inherit;font-size:16px;color:var(--ink);background:var(--felt2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;width:100%}
+input::placeholder{color:#6f8f82}
 .hide{display:none!important}
-footer{flex:none;text-align:center;color:var(--on);font-size:11px;padding:0 12px 6px;opacity:.85}
-footer a{color:var(--on)}
-@media(max-width:860px){.chat{grid-template-rows:minmax(0,1fr) auto}.chat>div:first-child{display:none}}
-@media(max-width:600px){.card a{display:none}.cardw .left .note{display:none}.card h2{font-size:16px}.card p{font-size:12px}}
-@media(max-height:620px){.lobbynote{display:none}}
+.wrap{height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);max-width:520px;margin:0 auto;padding-bottom:env(safe-area-inset-bottom)}
+@media(min-width:980px){.wrap.ingame{max-width:960px;grid-template-columns:minmax(0,1fr) 320px;gap:16px;padding:0 16px}}
+.col{display:flex;flex-direction:column;min-height:0;height:100dvh}
+.top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:max(12px,env(safe-area-inset-top)) 16px 8px}
+.logo{font:800 22px/1 var(--fn);letter-spacing:.01em;display:flex;align-items:baseline;gap:6px}
+.logo b{font:900 20px/1 var(--f)}.logo small{font:600 11px var(--fn);color:var(--sub)}
+.icbtn{height:38px;min-width:38px;padding:0 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;position:relative}
+.badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--pri);color:#fff;font:700 11px/18px var(--fn);text-align:center;padding:0 5px}
+/* ホーム */
+.home{flex:1;min-height:0;overflow-y:auto;padding:8px 16px 20px;display:flex;flex-direction:column;gap:14px}
+.title{font:900 clamp(26px,7vw,34px)/1.15 var(--f);margin:6px 0 0;text-wrap:balance}
+.lead{color:var(--sub);margin:0;font-size:14px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:14px;display:grid;gap:10px}
+.lbl{font-size:12px;color:var(--sub);font-weight:700}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.big{min-height:56px;border-radius:999px;font:900 16px var(--f);display:flex;align-items:center;justify-content:center;gap:8px}
+.pri{background:linear-gradient(180deg,var(--pri2),var(--pri));color:#2a0d05;box-shadow:0 6px 18px rgba(255,106,77,.28)}
+.sec{background:var(--felt2);border:1px solid var(--line)}
+.wait{display:grid;justify-items:center;gap:10px;padding:18px 10px;text-align:center}
+.seats{display:flex;gap:10px}.seat{width:46px;height:46px;border-radius:50%;border:2px dashed #4c7a68;display:grid;place-items:center;font:800 16px var(--fn);color:var(--sub)}
+.seat.on{border:0;background:var(--gold);color:#3a2a00;animation:pop .3s}
+.rules{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.rules li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;font-size:13.5px;color:#d3e0d9}
+.rules i{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--felt2);border:1px solid var(--line);display:grid;place-items:center;font:700 12px var(--fn);color:var(--gold)}
+.foot{font-size:11px;color:#6f8f82;text-align:center}.foot a{color:#8fb3a4}
+/* 対局 */
+.table{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:0 12px 8px}
+.pbar{flex:none;display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:16px}
+.av{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font:800 16px var(--f);color:#14110c}
+.pn{flex:1;min-width:0}.pn b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pn span{font-size:12px;color:var(--sub)}
+.stack{flex:none;display:flex;align-items:center;gap:6px;font:800 16px var(--fn)}
+.chip{width:16px;height:16px;border-radius:50%;background:repeating-conic-gradient(var(--gold) 0 30deg,#fff4cf 30deg 60deg);box-shadow:inset 0 0 0 3px var(--gold),0 1px 0 rgba(0,0,0,.4)}
+.st{flex:none;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--felt2);color:var(--sub);white-space:nowrap}
+.st.turn{background:var(--gold);color:#3a2a00}.st.dim{opacity:.7}
+.mid{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+.potrow{flex:none;display:flex;align-items:center;justify-content:center;gap:10px;min-height:34px}
+.pot{display:flex;align-items:center;gap:8px;padding:5px 14px 5px 8px;border-radius:999px;background:rgba(0,0,0,.25);font:800 18px var(--fn)}
+.pot .chips{position:relative;width:22px;height:22px}.pot .chips .chip{position:absolute;left:3px}
+.log{font-size:12px;color:var(--sub);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cards{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.cards.duo{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cw{display:flex;flex-direction:column;gap:6px;min-height:0}
+.tag{flex:none;font-size:12px;font-weight:700;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--card);color:var(--cink);border-radius:18px;overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,.35);animation:deal .35s ease-out}
+.card .img{flex:1 1 0;min-height:0;background:#e9e2d2 center/cover no-repeat;display:grid;place-items:center;font:800 40px var(--fn);color:#b9ae98}
+.card .tx{flex:0 1 auto;min-height:0;max-height:72%;overflow-y:auto;padding:10px 12px 12px}
+.card h2{margin:0 0 4px;font:900 clamp(17px,4.6vw,24px)/1.2 var(--f);overflow-wrap:anywhere}
+.card p{margin:0 0 6px;font-size:13px;line-height:1.55}
+.card .meta{font-size:11.5px;color:var(--csub)}.card a{color:var(--csub)}
+.card.win{box-shadow:0 0 0 4px var(--gold),0 10px 26px rgba(0,0,0,.35)}
+.back{flex:1;min-height:0;border-radius:18px;background:repeating-linear-gradient(45deg,#1a5240 0 10px,#174a3a 10px 20px);border:3px solid #2a6a55;display:grid;place-items:center;text-align:center;padding:12px;color:#cfe3da}
+.back b{display:block;font:900 20px var(--f);margin-bottom:4px}.back span{font-size:12.5px;color:#a8c7ba}
+.empty{flex:1;min-height:0;border-radius:18px;border:2px dashed #2f6655;display:grid;place-items:center;text-align:center;padding:16px;color:var(--sub)}
+.empty b{display:block;font:900 19px var(--f);color:var(--ink);margin-bottom:4px}
+.banner{flex:none;text-align:center;padding:4px 0}
+.banner b{display:block;font:900 clamp(22px,6vw,30px)/1.15 var(--f)}.banner b em{font-style:normal;color:var(--gold)}
+.banner span{font-size:12.5px;color:var(--sub)}
+.judge{flex:none;align-self:center;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:var(--gold);color:#3a2a00}
+@keyframes deal{from{transform:translateY(16px) scale(.96);opacity:0}}
+@keyframes pop{from{transform:scale(.6)}}
+@media(prefers-reduced-motion:reduce){.card,.seat.on{animation:none}}
+/* 操作パネル */
+.dock{flex:none;background:var(--panel);border:1px solid var(--line);border-radius:22px 22px 0 0;padding:12px 12px max(12px,env(safe-area-inset-bottom));display:grid;gap:10px;margin:0 -12px}
+.dock .msg{font-size:13px;color:var(--sub);text-align:center}
+.acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.acts .big{min-height:52px;font-size:15px;flex-direction:column;gap:0;line-height:1.15}
+.acts .big small{font:700 12px var(--fn);opacity:.8}
+.ghost{background:transparent;border:1px solid #3e6f5e;color:#d9e6e0}
+.amt{display:grid;gap:8px}
+.amth{display:flex;align-items:baseline;justify-content:space-between}
+.amth b{font:800 22px var(--fn);color:var(--gold)}
+input[type=range]{-webkit-appearance:none;appearance:none;padding:0;height:28px;background:transparent;border:0}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:9px;background:linear-gradient(90deg,var(--gold) var(--p,0%),#2b5c4b var(--p,0%))}
+input[type=range]::-moz-range-track{height:8px;border-radius:9px;background:#2b5c4b}
+input[type=range]::-moz-range-progress{height:8px;border-radius:9px;background:var(--gold)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;margin-top:-9px;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;border:0}
+.quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.quick button{min-height:36px;border-radius:999px;background:var(--felt2);border:1px solid var(--line);font-size:12.5px;font-weight:700}
+.left{font-size:12.5px;color:var(--sub);text-align:center}.left b{font:800 16px var(--fn);color:var(--ink)}
+/* チャット */
+.chat{display:flex;flex-direction:column;min-height:0;background:var(--panel);border:1px solid var(--line)}
+@media(min-width:980px){.chat{height:calc(100dvh - 24px);margin-top:12px;border-radius:20px}.chat .x{display:none}}
+@media(max-width:979px){.chat{position:fixed;left:0;right:0;bottom:0;height:62dvh;border-radius:22px 22px 0 0;z-index:5;box-shadow:0 -10px 40px rgba(0,0,0,.5);transform:translateY(105%);transition:transform .25s}.chat.open{transform:none}}
+.chath{flex:none;display:flex;justify-content:space-between;align-items:center;padding:12px 14px 6px}
+.chath b{font-size:15px}.chath span{font-size:12px;color:var(--sub)}
+.msgs{flex:1;min-height:0;overflow-y:auto;padding:4px 14px;display:flex;flex-direction:column;gap:6px}
+.m{font-size:14px;overflow-wrap:anywhere}.m b{margin-right:6px;color:#bcd6ca}.m.me b{color:var(--gold)}.m.sys{font-size:12px;color:#7fa293;text-align:center}
+.cf{flex:none;display:flex;gap:8px;padding:10px 12px max(12px,env(safe-area-inset-bottom))}
+.cf input{padding:10px 12px}.cf button{flex:none;padding:0 16px;border-radius:999px;background:var(--felt2);border:1px solid var(--line);font-weight:700}
+.toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:#000c;padding:8px 14px;border-radius:999px;font-size:13px;z-index:9}
+@media(max-height:640px){.card p{font-size:12px}.pbar{padding:6px 8px}.av{width:32px;height:32px}.acts .big{min-height:46px}.big{min-height:48px}}
 </style></head><body>
-<header><h1>強そうな方が勝ち</h1><span class="info" id="hinfo">Wikipediaのランダム記事で勝負。引き直しは10回まで、前のには戻れない。</span></header>
-<main>
-<section class="panel" id="stage">
-  <div id="lobby" class="field">
-    <div class="big" style="font-size:20px">部屋に入る</div>
-    <div><label for="nm">名前</label><input id="nm" maxlength="12" placeholder="名前"></div>
-    <div class="row"><button class="main" id="rm">ランダムマッチ</button><span class="note" id="rmst">知らない人と3人そろったら開始。審判は3人の中からランダム</span></div>
-    <div class="row hide" id="rmw"><span class="big" style="font-size:18px" id="rmn">探しています…</span><button id="rmc">やめる</button></div>
-    <div><label for="rc">友だちと遊ぶ：部屋番号（同じ番号の人と対戦）</label><input id="rc" maxlength="8" inputmode="numeric"></div>
-    <div class="row"><button id="enter">部屋に入る</button></div>
-    <p class="note lobbynote">遊び方：2人とも記事を引く → 気に入らなければ引き直し（最大10回、引いたら前のには戻れない）→「これで勝負」で決定 → 2人とも決めたら、相手の記事が見えないままポーカーのように賭ける（チェック・ベット・コール・レイズ・フォールド。チップは最初1000枚、毎回10枚の参加料）。3人目に入った人が審判になり、名前を伏せた2枚から強そうな方を選ぶ。勝った方がポットを取る。</p>
+<div class="wrap" id="wrap">
+<div class="col">
+  <header class="top"><div class="logo"><b>強そうな方が勝ち</b></div><div class="row" id="topr" style="display:flex;gap:8px"></div></header>
+
+  <div class="home" id="home">
+    <div><h1 class="title">Wikipediaの記事で、<br>強さ勝負。</h1><p class="lead">ランダムに引いた記事で戦う3人用のゲーム。2人が賭けて、1人が名前を伏せて判定します。</p></div>
+    <div class="box">
+      <label class="lbl" for="nm">名前</label><input id="nm" maxlength="12" placeholder="名前を入れてください" autocomplete="nickname">
+      <div class="two" id="btns"><button class="big pri" id="rm">ランダムマッチ</button><button class="big sec" id="fr">友だちと遊ぶ</button></div>
+      <div class="hide" id="frbox" style="display:grid;gap:8px">
+        <label class="lbl" for="rc">部屋番号（同じ番号の人と対戦。3人目が審判）</label>
+        <div style="display:flex;gap:8px"><input id="rc" maxlength="8" inputmode="numeric"><button class="big pri" id="enter" style="flex:none;padding:0 22px;min-height:48px">入る</button></div>
+      </div>
+      <div class="wait hide" id="rmw"><div class="seats" id="seats"></div><b id="rmn">探しています…</b><span class="lead">3人そろったら始まります。審判は3人の中からランダム。</span><button class="big ghost" id="rmc" style="min-height:44px;padding:0 24px">やめる</button></div>
+    </div>
+    <div class="box">
+      <div class="lbl">遊び方</div>
+      <ul class="rules">
+        <li><i>1</i><span>2人とも記事を引く。気に入らなければ引き直し（10回まで。前の記事には戻れない）</span></li>
+        <li><i>2</i><span>2人とも決めたら、相手の記事が見えないまま賭ける。チップは1000枚、毎回10枚の参加料。チェック・ベット・コール・レイズ・フォールド、ブラフもあり</span></li>
+        <li><i>3</i><span>賭けが決まったら、審判が名前を伏せた2枚から強そうな方を選ぶ。勝った方がポットを取る</span></li>
+      </ul>
+    </div>
+    <p class="foot">記事の文章と画像は <a href="https://ja.wikipedia.org/">ウィキペディア日本語版</a> より（<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ja">CC BY-SA 4.0</a>）。チャットは12時間で消えます。</p>
   </div>
-  <div id="game" class="hide"></div>
-</section>
-<aside class="panel chat" id="chatp">
-  <div><div class="big">チャット</div><div class="note" id="who">部屋に入ると使えます</div></div>
-  <div class="log" id="log"></div>
-  <form class="row" id="cf" style="flex-wrap:nowrap"><input id="ci" maxlength="200" placeholder="メッセージ" autocomplete="off" disabled><button id="cs" disabled>送る</button></form>
+
+  <div class="table hide" id="game"></div>
+</div>
+<aside class="chat hide" id="chat">
+  <div class="chath"><div><b>チャット</b><br><span id="who"></span></div><button class="icbtn x" id="cx">閉じる</button></div>
+  <div class="msgs" id="log"></div>
+  <form class="cf" id="cf"><input id="ci" maxlength="200" placeholder="メッセージ" autocomplete="off"><button id="cs">送る</button></form>
 </aside>
-</main>
-<footer>記事の文章と画像は <a href="https://ja.wikipedia.org/">ウィキペディア日本語版</a> より（<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ja">CC BY-SA 4.0</a>）。チャットは12時間で消えます。</footer>
+</div>
 <script>
 {
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
@@ -101,52 +161,64 @@ if(!myId){myId=Math.random().toString(36).slice(2,10);try{sessionStorage.setItem
 const q=new URLSearchParams(location.search);
 $("nm").value=store.get("tsy-name")||"";
 $("rc").value=q.get("r")||String(Math.floor(1000+Math.random()*9000));
+if(q.get("r")){$("frbox").classList.remove("hide")}
 
-let lastH="",joined=false,me="",room="",ws=null,seen=new Set(),retry=0;
+let lastH="",joined=false,me="",room="",ws=null,seen=new Set(),retry=0,unread=0,chatOpen=false;
 const players=new Map(); // id -> {name,first,last}
-const rounds={};         // r -> {picks:{},votes:{},draws:{}}
+const rounds={};
 let R=1;
-let local={r:0,draws:0,cur:null,decided:false,busy:false};
+let local={r:0,draws:0,cur:null,decided:false,busy:false,amt:null};
 const R_=r=>rounds[r]||(rounds[r]={picks:{},votes:{},draws:{},acts:[],reset:false});
 const ANTE=10,START=1000;
+const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h};
+const av=id=>{const p=players.get(id)||{name:"?"};return `<div class="av" style="background:hsl(${hue(p.name)} 70% 72%)">${esc((p.name||"?").slice(0,1))}</div>`};
+const nm=id=>esc((players.get(id)||{}).name||"?");
+function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),1800)}
 
+$("fr").onclick=()=>{$("frbox").classList.toggle("hide");if(!$("frbox").classList.contains("hide"))$("rc").focus()};
 $("enter").onclick=()=>enterRoom($("rc").value.trim().replace(/\D/g,"").slice(0,8));
+function needName(){if($("nm").value.trim())return false;$("nm").focus();toast("先に名前を入れてください");return true}
 function enterRoom(rm,ord){
-  me=$("nm").value.trim().slice(0,12);room=rm;
-  if(!me){$("nm").focus();return}if(!room){$("rc").focus();return}
+  if(needName())return;
+  me=$("nm").value.trim().slice(0,12);room=rm;if(!room){$("rc").focus();return}
   store.set("tsy-name",me);stopMatch();
   if(ord)fixedOrder=ord;
   for(const i of fixedOrder)if(!players.has(i))players.set(i,{name:(want.get(i)||{}).name||"入室待ち",first:0,last:0});
   try{history.replaceState(null,"","?r="+room+(fixedOrder.length===3?"&o="+fixedOrder.join("."):""))}catch(e){}
-  $("lobby").classList.add("hide");$("game").classList.remove("hide");
-  $("ci").disabled=$("cs").disabled=false;
-  $("hinfo").innerHTML="部屋 "+esc(room)+" ｜ <button id='cp' style='min-height:32px;padding:2px 10px;border-color:#fff7ec;color:#fff7ec;background:transparent'>招待リンクをコピー</button>";
-  $("cp").onclick=async e=>{try{await navigator.clipboard.writeText(location.origin+location.pathname+"?r="+room);e.target.textContent="コピーしました"}catch(_){e.target.textContent=location.origin+location.pathname+"?r="+room}};
+  $("home").classList.add("hide");$("game").classList.remove("hide");$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
+  $("topr").innerHTML=`<button class="icbtn" id="cp">招待</button><button class="icbtn" id="co">チャット<span class="badge hide" id="ub"></span></button>`;
+  $("cp").onclick=async()=>{const u=location.origin+location.pathname+"?r="+room;try{await navigator.clipboard.writeText(u);toast("招待リンクをコピーしました")}catch(_){toast(u)}};
+  $("co").onclick=()=>setChat(!chatOpen);
   connect();setInterval(hello,12000);setInterval(render,5000);render();
 }
+function setChat(o){chatOpen=o;$("chat").classList.toggle("open",o);if(o){unread=0;badge();const l=$("log");l.scrollTop=l.scrollHeight;setTimeout(()=>$("ci").focus(),250)}}
+$("cx").onclick=()=>setChat(false);
+function badge(){const b=$("ub");if(!b)return;b.textContent=unread;b.classList.toggle("hide",!unread||chatOpen||innerWidth>=980)}
 
 // ---- ランダムマッチ（待合室 tsyoi-lobby。3人そろったら、いちばん前に待っていた人が部屋を作って配る） ----
-let lws=null,lbeat=null,ltick=null,matching=false,myWantAt=0;let sentAt=0;const want=new Map(),gone=new Map();
+let lws=null,lbeat=null,ltick=null,matching=false,myWantAt=0,sentAt=0;const want=new Map(),gone=new Map();
 const LOBBY="tsyoi-lobby";
 function lpost(m){m.id=myId;m.name=$("nm").value.trim().slice(0,12);return fetch(RELAY+LOBBY,{method:"POST",body:JSON.stringify(m)}).catch(()=>{})}
-$("rm").onclick=()=>{
-  if(!$("nm").value.trim()){$("nm").focus();return}
-  matching=true;myWantAt=Date.now()/1000;$("rmw").classList.remove("hide");$("rm").disabled=true;$("enter").disabled=true;
+$("rm").onclick=startMatch;
+function startMatch(){
+  if(needName())return;store.set("tsy-name",$("nm").value.trim().slice(0,12));
+  matching=true;myWantAt=Date.now()/1000;$("rmw").classList.remove("hide");$("btns").classList.add("hide");$("frbox").classList.add("hide");seatsUI(1);
   lws=new WebSocket(RELAY.replace("https","wss")+LOBBY+"/ws?since=90s");
   lws.onmessage=e=>{let ev;try{ev=JSON.parse(e.data)}catch(_){return}if(ev.event!=="message")return;let m;try{m=JSON.parse(ev.message)}catch(_){return}lhandle(m,ev.time)};
-  lws.onclose=()=>{if(matching)setTimeout(()=>{if(matching){matching=false;$("rm").onclick()}},2000)};
+  lws.onclose=()=>{if(matching)setTimeout(()=>{if(matching){stopMatch();startMatch()}},2000)};
   lpost({t:"want",since:myWantAt});lbeat=setInterval(()=>lpost({t:"want",since:myWantAt}),8000);ltick=setInterval(lcheck,3000);
-};
+}
 $("rmc").onclick=()=>{lpost({t:"cancel"});stopMatch()};
 function stopMatch(){matching=false;clearInterval(lbeat);clearInterval(ltick);if(lws){const w=lws;lws=null;w.onclose=null;try{w.close()}catch(e){}}
-  $("rmw").classList.add("hide");$("rm").disabled=false;$("enter").disabled=false}
+  $("rmw").classList.add("hide");$("btns").classList.remove("hide")}
+function seatsUI(n){$("seats").innerHTML=[0,1,2].map(i=>`<div class="seat${i<n?" on":""}">${i<n?"●":""}</div>`).join("");$("rmn").textContent="探しています… "+n+"／3人"}
 function lhandle(m,time){
   if(!m||typeof m.id!=="string")return;
-  if(m.t==="want"){const w=want.get(m.id)||{};want.set(m.id,{name:String(m.name||"").slice(0,12),since:Number(m.since)||time,last:time});if(gone.has(m.id)&&time>gone.get(m.id)+3)gone.delete(m.id)}
+  if(m.t==="want"){want.set(m.id,{name:String(m.name||"").slice(0,12),since:Number(m.since)||time,last:time});if(gone.has(m.id)&&time>gone.get(m.id)+3)gone.delete(m.id)}
   else if(m.t==="cancel"){want.delete(m.id)}
   else if(m.t==="match"&&Array.isArray(m.ids)&&m.ids.length===3&&/^\d{6}$/.test(String(m.room))){
     m.ids.forEach(i=>{gone.set(i,time);want.delete(i)});
-    if(matching&&m.ids.includes(myId)&&time>=myWantAt-2){sysmsg("マッチしました");enterRoom(String(m.room),m.ids.map(String));return}
+    if(matching&&m.ids.includes(myId)&&time>=myWantAt-2){enterRoom(String(m.room),m.ids.map(String));sysmsg("マッチしました");return}
   }
   lcheck();
 }
@@ -154,19 +226,17 @@ function lcheck(){
   if(!matching)return;const now=Date.now()/1000;
   const list=[...want.entries()].filter(([i,w])=>now-w.last<25&&!gone.has(i)).sort((a,b)=>a[1].since-b[1].since||(a[0]<b[0]?-1:1)).map(x=>x[0]);
   if(!list.includes(myId))list.push(myId);
-  $("rmn").textContent="探しています… "+Math.min(list.length,3)+"／3人";
+  seatsUI(Math.min(list.length,3));
   if(list.length>=3&&list[0]===myId&&now-sentAt>10){sentAt=now;
     const three=list.slice(0,3),j=three[Math.floor(Math.random()*3)],pl=three.filter(i=>i!==j);
     if(Math.random()<.5)pl.reverse();
-    const rm=String(Math.floor(100000+Math.random()*900000));
-    lpost({t:"match",room:rm,ids:[...pl,j]});
+    lpost({t:"match",room:String(Math.floor(100000+Math.random()*900000)),ids:[...pl,j]});
   }
 }
 
 function connect(){
-  const t="tsyoi-"+room;
-  ws=new WebSocket(RELAY.replace("https","wss")+t+"/ws?since=3h");
-  ws.onopen=()=>{retry=0;hello();sysmsg("つながりました");if(!joined){joined=true;send({t:"join",r:R})}};
+  ws=new WebSocket(RELAY.replace("https","wss")+"tsyoi-"+room+"/ws?since=3h");
+  ws.onopen=()=>{retry=0;hello();if(!joined){joined=true;send({t:"join",r:R})}};
   ws.onmessage=e=>{let ev;try{ev=JSON.parse(e.data)}catch(_){return}
     if(ev.event!=="message"||seen.has(ev.id))return;seen.add(ev.id);
     let m;try{m=JSON.parse(ev.message)}catch(_){return}handle(m,ev.time)};
@@ -174,13 +244,14 @@ function connect(){
 }
 async function send(m){
   m.id=myId;m.name=me;
-  try{await fetch(RELAY+"tsyoi-"+room,{method:"POST",body:JSON.stringify(m)})}catch(e){sysmsg("送れませんでした。電波を確認してください")}
+  try{await fetch(RELAY+"tsyoi-"+room,{method:"POST",body:JSON.stringify(m)})}catch(e){toast("送れませんでした。電波を確認してください")}
 }
 function hello(){send({t:"hello",r:R,draws:local.r===R?local.draws:0})}
 
 function handle(m,time){
   if(!m||typeof m.id!=="string")return;
   const p=players.get(m.id)||{name:"",first:time,last:0};
+  if(!p.first)p.first=time;
   p.name=String(m.name||"").slice(0,12);p.last=Math.max(p.last,time);players.set(m.id,p);
   const r=Number(m.r)||1;
   if(m.t==="chat")addmsg(p.name,String(m.text||"").slice(0,200),m.id===myId);
@@ -211,14 +282,14 @@ async function draw(){
     const pg=Object.values(j.query.pages)[0];
     local.cur={title:pg.title,ext:(pg.extract||"").slice(0,300),img:pg.thumbnail?pg.thumbnail.source:"",url:pg.fullurl||("https://ja.wikipedia.org/wiki/"+encodeURIComponent(pg.title)),len:pg.length||0};
     local.draws++;send({t:"draw",r:R,draws:local.draws});
-  }catch(e){sysmsg("記事を引けませんでした。もう一度押してください")}
+  }catch(e){toast("記事を引けませんでした。もう一度押してください")}
   local.busy=false;render();
 }
 function decide(){if(!local.cur||local.decided)return;local.decided=true;send({t:"pick",r:R,a:local.cur,draws:local.draws});render()}
 
 function card(a,opt={}){
   const img=a.img?`style="background-image:url('${esc(a.img)}')"`:"";
-  return `<div class="card${opt.win?" win":""}"><div class="img" ${img}>${a.img?"":"？"}</div><div class="tx"><h2>${esc(a.title)}</h2><p>${esc(a.ext||"（説明なし）")}</p><a href="${esc(a.url)}" target="_blank" rel="noopener">Wikipediaで読む</a> <span class="note">｜${Number(a.len||0).toLocaleString()}バイト</span></div></div>`;
+  return `<div class="card${opt.win?" win":""}"><div class="img" ${img}>${a.img?"":"?"}</div><div class="tx"><h2>${esc(a.title)}</h2><p>${esc(a.ext||"（説明なし）")}</p><div class="meta"><a href="${esc(a.url)}" target="_blank" rel="noopener">Wikipediaで読む</a>　${Number(a.len||0).toLocaleString()}バイト</div></div></div>`;
 }
 // 賭け：2人の記事が出そろったら、相手の記事が見えないまま賭ける（奇数戦は1人目、偶数戦は2人目から）
 function betState(r,s,st){
@@ -261,82 +332,117 @@ function history_(s,j){ // R戦の始まりまでのチップと勝ち数
   return{st,wins};
 }
 
+function pbar(i,st,status,cls){
+  return `<div class="pbar">${av(i)}<div class="pn"><b>${nm(i)}${i===myId?"（あなた）":""}</b><span>${online(i)?"":"オフライン・"}${status.wins||0}勝</span></div><div class="stack"><span class="chip"></span>${st}</div>${status.txt?`<div class="st ${cls||""}">${status.txt}</div>`:""}</div>`;
+}
+
 function render(){
-  const g=$("game");if(g.classList.contains("hide"))return;
-  if(local.r!==R)local={r:R,draws:0,cur:null,decided:false,busy:false};
+  const g=$("game");if(g.classList.contains("hide")||dragging)return;
+  if(local.r!==R)local={r:R,draws:0,cur:null,decided:false,busy:false,amt:null};
   const s=seats(),J=judgeId(),isJ=J===myId,isP=s.includes(myId),opp=s.find(i=>i!==myId);
-  const x=R_(R),oname=opp?esc(players.get(opp).name):"";
+  const x=R_(R);
   if(isP&&!local.cur&&(x.draws[myId]||0)>local.draws)local.draws=Math.min(x.draws[myId],MAXDRAW-1);
   if(isP&&x.picks[myId]&&!local.decided){local.decided=true;local.cur=x.picks[myId];local.draws=x.draws[myId]||MAXDRAW}
-  // 成績
-  const H=s.length===2?history_(s,J):{st:{},wins:{}},wins=H.wins,st=H.st;
-  const both0=s.length===2&&x.picks[s[0]]&&x.picks[s[1]],B=both0?betState(R,s,st):null;
+  $("who").textContent=s.length<2?"相手を待っています":s.map(i=>(players.get(i)||{}).name).join(" vs ")+"　審判："+(J?(players.get(J)||{}).name:"まだいません");
+  let h="";
+  if(s.length<2){
+    h=`<div class="mid"><div class="empty"><div><b>相手を待っています</b>上の「招待」で部屋のリンクをコピーして送ってください。3人目に入った人が審判です。</div></div></div>`;
+    return paint(g,h);
+  }
+  const H=history_(s,J),wins=H.wins,st=H.st;
+  const both=x.picks[s[0]]&&x.picks[s[1]],B=both?betState(R,s,st):null;
   const Z=B&&B.done?outcome(R,s,J,st):null;
   const left=i=>Z?st[i]+(Z.w===i?Z.stake:-Z.stake):B?st[i]-B.c[i]:st[i];
-  const sc=s.map(i=>`<span><span class="dot${online(i)?"":" off"}"></span>${esc(players.get(i).name)}${i===myId?"（あなた）":""}：<b>${wins[i]||0}勝</b>　チップ <b>${left(i)}</b></span>`).join("");
-  $("who").innerHTML=s.length<2?"相手を待っています。招待リンクを送ってください":s.map(i=>esc(players.get(i).name)).join(" vs ")+"　審判："+(J?esc(players.get(J).name)+(isJ?"（あなた）":""):"まだいません")+(isP||isJ?"":"（観戦中）");
-  let h=`<div class="row top"><div class="big" style="font-size:18px">第${R}戦</div><div class="score">${sc}</div></div>`;
-  const both=s.length===2&&x.picks[s[0]]&&x.picks[s[1]];
+  const lastAct=i=>{if(!B)return"";for(let k=B.log.length-1;k>=0;k--)if(B.log[k][0]===i)return B.log[k][1];return""};
+  const stat=i=>{
+    if(!both)return x.picks[i]?"決定済み":(x.draws[i]||0)?(x.draws[i]+"回目"):"考え中";
+    if(Z)return Z.w===i?"勝ち":"";
+    if(!B.done)return B.to===i?"考え中…":lastAct(i)||"待ち";
+    return lastAct(i);
+  };
+  const top=isP?opp:s[0],bot=isP?myId:s[1];
+  const cls=i=>both&&B&&!B.done&&B.to===i?"turn":"";
+  const bar=i=>pbar(i,left(i),{wins:wins[i],txt:stat(i)},cls(i));
+  h+=bar(top);
+  h+=`<div class="mid">`;
+  if(isJ)h+=`<div class="judge">あなたは審判です</div>`;
+  if(both){
+    h+=`<div class="potrow"><div class="pot"><span class="chips"><span class="chip" style="top:6px"></span><span class="chip" style="top:2px"></span><span class="chip" style="top:-2px"></span></span>${B.pot}</div></div>`;
+    if(B.log.length)h+=`<div class="log">${B.log.slice(-3).map(([i,t])=>nm(i)+"："+t).join("　→　")}</div>`;
+  }
+  let dock="";
   if(!both){
     if(isP){
-      const left=MAXDRAW-local.draws;
-      h+=`<div class="cards"><div class="cardw"><div class="tag">あなたの記事</div>`;
-      h+=local.cur?card(local.cur):`<div class="back"><div><div class="big">まだ引いていません</div><div class="note">押すとWikipediaのランダムな記事が1つ出ます</div></div></div>`;
+      h+=`<div class="cards"><div class="cw"><div class="tag">あなたの記事　${local.cur?local.draws+"回目":""}</div>${local.cur?card(local.cur):`<div class="empty"><div><b>まだ引いていません</b>下のボタンでWikipediaのランダムな記事を引きます</div></div>`}</div></div>`;
+      const lf=MAXDRAW-local.draws;
       if(!local.decided){
-        h+=`<div class="row">${local.cur?`<button id="bd" ${local.busy||left<=0?"disabled":""}>${local.busy?"引いています…":"引き直す"}</button><button class="main" id="bk">これで勝負</button>`:`<button class="main" id="bd" ${local.busy?"disabled":""}>${local.busy?"引いています…":"1枚目を引く"}</button>`}</div>`;
-        h+=`<div class="left">引き直し残り <b>${local.cur?Math.max(0,left):10}</b> 回${local.cur&&left<=0?"　もう引けません":""} <span class="note">引き直すと前のには戻れません</span></div>`;
-      }else h+=`<div class="note">決定しました。相手を待っています。</div>`;
-      h+=`</div><div class="cardw"><div class="tag">${opp?oname+" さんの記事":"相手"}</div><div class="back"><div><div class="big">${!opp?"まだいません":x.picks[opp]?"決定済み":"考え中…"}</div><div class="note">${opp?(x.draws[opp]||0)+"回引いた":"招待リンクを送ってください"}</div></div></div></div></div>`;
+        dock=local.cur?`<div class="left">引き直し 残り <b>${Math.max(0,lf)}</b> 回　前の記事には戻れません</div><div class="two"><button class="big ghost" id="bd" ${local.busy||lf<=0?"disabled":""}>${local.busy?"引いています…":"引き直す"}</button><button class="big pri" id="bk">これで勝負</button></div>`
+          :`<button class="big pri" id="bd" ${local.busy?"disabled":""}>${local.busy?"引いています…":"1枚目を引く"}</button>`;
+      }else dock=`<div class="msg">決定しました。${nm(opp)} さんを待っています</div>`;
     }else{
-      h+=`<div class="back" style="flex:1"><div><div class="big">${isJ?"あなたは審判です":"観戦中"}</div><div class="note">${s.map(i=>esc(players.get(i).name)+"："+(x.picks[i]?"決定済み":(x.draws[i]||0)+"回引いた")).join("<br>")}${isJ?"<br>2人が決めたら、名前を伏せた2枚が出ます。強そうな方を選んでください":""}</div></div></div>`;
+      h+=`<div class="empty"><div><b>${isJ?"2人が記事を選んでいます":"観戦中"}</b>${isJ?"2人が決めて賭けが終わると、名前を伏せた2枚が出ます":""}</div></div>`;
+    }
+  }else if(!B.done){
+    if(isP){
+      h+=`<div class="cards duo"><div class="cw"><div class="tag">あなた</div>${card(x.picks[myId])}</div><div class="cw"><div class="tag">${nm(opp)}</div><div class="back"><div><b>？</b><span>賭けが終わると見えます</span></div></div></div></div>`;
+      const need=B.c[opp]-B.c[myId],my=st[myId]-B.c[myId],turn=B.to===myId,wait=local.wait===x.acts.length;
+      if(turn){
+        const capped=B.c[opp]>=st[opp],room_=my-Math.max(need,0);
+        const minA=Math.min(10,room_),maxA=room_;
+        if(local.amt==null||local.amt>maxA||local.amt<minA)local.amt=Math.min(maxA,Math.max(minA,Math.min(100,maxA)));
+        const canRaise=!capped&&room_>0&&!wait;
+        const p=maxA>minA?Math.round((local.amt-minA)/(maxA-minA)*100):100;
+        const raiseLbl=need>0?"レイズ":"ベット",allin=local.amt>=maxA;
+        dock=`<div class="msg">あなたの番です。相手の記事は見えません</div>`;
+        if(canRaise)dock+=`<div class="amt"><div class="amth"><span class="lbl">${need>0?"上乗せする枚数":"賭ける枚数"}</span><b id="av">${local.amt}${allin?"（オールイン）":""}</b></div>
+          <input type="range" id="sl" min="${minA}" max="${maxA}" step="10" value="${local.amt}" style="--p:${p}%" aria-label="賭ける枚数">
+          <div class="quick"><button data-q="${Math.floor(B.pot/2)}">½ポット</button><button data-q="${B.pot}">ポット</button><button data-q="${Math.floor(maxA/2)}">半分</button><button data-q="${maxA}">オールイン</button></div></div>`;
+        dock+=`<div class="acts">${need>0?`<button class="big ghost" data-act="fold" ${wait?"disabled":""}>フォールド</button><button class="big sec" data-act="call" ${wait?"disabled":""}>コール<small>${Math.min(need,my)}</small></button>`:`<button class="big ghost" disabled>フォールド</button><button class="big sec" data-act="check" ${wait?"disabled":""}>チェック</button>`}<button class="big pri" id="ra" data-lbl="${raiseLbl}" data-act="${allin?"allin":"raise"}" ${canRaise?"":"disabled"}>${allin?"オールイン":raiseLbl}<small>${canRaise?(allin?maxA:"+"+local.amt):"—"}</small></button></div>`;
+      }else dock=`<div class="msg">${nm(opp)} さんの番です</div>`;
+    }else{
+      h+=`<div class="empty"><div><b>2人が賭けています</b>${isJ?"賭けが決まったら、名前を伏せた2枚が出ます":""}</div></div>`;
     }
   }else{
-    const z=outcome(R,s,J,st),logH=B.log.length?`<div class="note" style="flex:none">${B.log.slice(-4).map(([i,t])=>esc(players.get(i).name)+"："+t).join("　→　")}</div>`:"";
-    const potH=`<div class="row" style="flex:none;gap:4px 14px"><span class="big" style="font-size:18px">ポット ${B.pot}枚</span><span class="note">${s.map(i=>esc(players.get(i).name)+" "+B.c[i]+"枚").join("・")}</span></div>`;
-    if(!B.done){
-      if(isP){
-        const need=B.c[opp]-B.c[myId],my=st[myId]-B.c[myId],turn=B.to===myId,wait=local.wait===x.acts.length;
-        const btn=(a,label,amt,dis)=>`<button ${a==="fold"||a==="check"?"":'class="main"'} data-act="${a}" data-amt="${amt||0}" ${dis||wait?"disabled":""}>${label}</button>`;
-        let acts="";
-        if(turn){
-          if(need<=0)acts=btn("check","チェック")+[50,100,200].map(v=>btn("raise","ベット "+v,v,my<=0)).join("")+btn("allin","オールイン",0,my<=0);
-          else acts=btn("fold","フォールド")+btn("call","コール "+Math.min(need,my))+[50,100,200].map(v=>btn("raise","レイズ +"+v,v,my<=need||B.c[opp]>=st[opp])).join("")+btn("allin","オールイン",0,my<=need||B.c[opp]>=st[opp]);
-        }
-        h+=potH+logH+`<div class="note" style="flex:none">${turn?"あなたの番です。相手の記事は見えません。ブラフもあり。":"相手の番です。"}</div>`;
-        h+=`<div class="cards"><div class="cardw"><div class="tag">あなたの記事</div>${card(x.picks[myId])}</div><div class="cardw"><div class="tag">${oname} さんの記事</div><div class="back"><div><div class="big">？</div><div class="note">賭けが終わったら見えます</div></div></div></div></div>`;
-        if(turn)h+=`<div class="row" style="flex:none">${acts}</div>`;
-      }else{
-        h+=potH+logH+`<div class="back" style="flex:1"><div><div class="big">2人が賭けています</div><div class="note">${isJ?"賭けが決まったら、名前を伏せた2枚が出ます":""}</div></div></div>`;
-      }
+    const blind=!isP&&!Z;
+    const ord=(R+s[0].charCodeAt(0)+s[1].charCodeAt(0))%2?[s[1],s[0]]:s;
+    if(Z)h+=`<div class="banner"><b>${nm(Z.w)} の勝ち <em>+${Z.stake}</em></b><span>${Z.how}</span></div>`;
+    h+=`<div class="cards duo">`+ord.map((i,k)=>{const lab="AB"[k];
+      return `<div class="cw"><div class="tag">${blind?"記事 "+lab:lab+"："+nm(i)+(i===myId?"（あなた）":"")+"　"+(x.draws[i]||"?")+"回目"}</div>${card(x.picks[i],{win:Z&&Z.w===i})}</div>`}).join("")+`</div>`;
+    if(!Z){
+      if(isJ)dock=`<div class="msg">名前は伏せてあります。強そうな方を選んでください</div><div class="two">${ord.map((i,k)=>`<button class="big pri" data-v="${i}">${"AB"[k]} が強そう</button>`).join("")}</div>`;
+      else dock=`<div class="msg">${J?"審判の判定を待っています":"審判（3人目）がまだいません。招待リンクで呼んでください"}</div>`;
     }else{
-    const blind=!isP&&!z;
-    const ord=(R+s[0].charCodeAt(0)+s[1].charCodeAt(0))%2?[s[1],s[0]]:s; // 並びは毎回ばらばら
-    const msg=z?"":isJ?"名前は伏せてあります。強そうな方を選んでください。判定のあとで誰の記事か分かります。":isP?(J?"賭けが決まりました。審判の判定を待っています。":"審判（3人目）がまだいません。招待リンクを送って、もう1人呼んでください。"):"審判の判定を待っています。";
-    h+=z?`<div style="flex:none"><div class="res">${esc(players.get(z.w).name)} の勝ち！ +${z.stake}枚</div><div class="note">${z.how}</div></div>`:`<div class="note" style="flex:none">${msg}　ポット ${B.pot}枚</div>`;
-    h+=`<div class="cards">`+ord.map((i,k)=>{
-      const lab="AB"[k];
-      const tag=blind?`記事 ${lab}`:`${lab}：${esc(players.get(i).name)}${i===myId?"（あなた）":""}　${x.draws[i]||"?"}回目で決定`;
-      return `<div class="cardw"><div class="tag">${tag}</div>${card(x.picks[i],{win:z&&z.w===i})}
-      ${isJ&&!z?`<button class="main" data-v="${i}" style="flex:none">${lab} が強そう</button>`:""}</div>`}).join("")+`</div>`;
-    if(z){
-      const after={...st};const l=s.find(i=>i!==z.w);after[z.w]+=z.stake;after[l]-=z.stake;
-      const broke=s.some(i=>after[i]<ANTE);
-      h+=`<div class="row" style="flex:none">${broke&&isP?`<span class="note">チップが尽きた人がいます</span><button class="main" id="rs">チップを配り直して次へ</button>`:`<button class="main" id="nx">もう一局</button>`}</div>`;
-    }
+      const after={};s.forEach(i=>after[i]=left(i));const broke=s.some(i=>after[i]<ANTE);
+      dock=broke&&isP?`<div class="msg">チップが尽きた人がいます</div><button class="big pri" id="rs">チップを配り直して次へ</button>`:`<button class="big pri" id="nx">もう一局</button>`;
     }
   }
+  h+=`</div>`+bar(bot);
+  if(dock)h+=`<div class="dock">${dock}</div>`;
+  paint(g,h);
+}
+function paint(g,h){
   if(h===lastH)return;lastH=h;g.innerHTML=h;
   const bd=$("bd");if(bd)bd.onclick=draw;const bk=$("bk");if(bk)bk.onclick=decide;
   const nx=$("nx");if(nx)nx.onclick=()=>{R++;send({t:"next",r:R});render()};
   const rs=$("rs");if(rs)rs.onclick=()=>{R++;send({t:"next",r:R});send({t:"reset",r:R});render()};
-  g.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{local.wait=R_(R).acts.length;send({t:"act",r:R,a:b.dataset.act,amt:Number(b.dataset.amt)||0});render()});
+  const sl=$("sl");if(sl){sl.oninput=()=>{local.amt=Number(sl.value);amtUI()};sl.onpointerdown=()=>dragging=true;sl.onpointerup=sl.onpointercancel=()=>{dragging=false}}
+  g.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{const sl=$("sl");local.amt=Math.max(Number(sl.min),Math.min(Number(sl.max),Math.round(Number(b.dataset.q)/10)*10||Number(sl.min)));if(Number(b.dataset.q)>=Number(sl.max))local.amt=Number(sl.max);lastH="";render()});
+  g.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{local.wait=R_(R).acts.length;send({t:"act",r:R,a:b.dataset.act,amt:local.amt||0});local.amt=null;render()});
   g.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{R_(R).votes[myId]=b.dataset.v;send({t:"vote",r:R,for:b.dataset.v});render()});
 }
+let dragging=false;
+function amtUI(){ // スライダーを動かしている間は、数字だけ書き換える（画面は作り直さない）
+  const sl=$("sl"),ra=$("ra");if(!sl||!ra)return;const mn=Number(sl.min),mx=Number(sl.max),v=local.amt,all=v>=mx;
+  sl.style.setProperty("--p",(mx>mn?Math.round((v-mn)/(mx-mn)*100):100)+"%");
+  $("av").textContent=v+(all?"（オールイン）":"");
+  ra.dataset.act=all?"allin":"raise";ra.innerHTML=(all?"オールイン":ra.dataset.lbl)+`<small>${all?mx:"+"+v}</small>`;
+}
 
-function addmsg(n,t,mine){const d=document.createElement("div");d.className="msg"+(mine?" me":"");d.innerHTML=`<b>${esc(n)}</b>${esc(t)}`;push(d)}
-function sysmsg(t){const d=document.createElement("div");d.className="msg sys";d.textContent=t;push(d)}
+function addmsg(n,t,mine){const d=document.createElement("div");d.className="m"+(mine?" me":"");d.innerHTML=`<b>${esc(n)}</b>${esc(t)}`;push(d);if(!mine&&!chatOpen){unread++;badge()}}
+function sysmsg(t){const d=document.createElement("div");d.className="m sys";d.textContent=t;push(d)}
 function push(d){const l=$("log"),bottom=l.scrollHeight-l.scrollTop-l.clientHeight<40;l.appendChild(d);if(bottom)l.scrollTop=l.scrollHeight}
 $("cf").onsubmit=e=>{e.preventDefault();const t=$("ci").value.trim();if(!t||!room)return;$("ci").value="";send({t:"chat",r:R,text:t.slice(0,200)})};
+addEventListener("resize",badge);
 }
 </script>
 </body></html>
