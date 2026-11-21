@@ -78,10 +78,10 @@ input::placeholder{color:#a99d93}
 .others.n2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .mini{display:flex;align-items:center;gap:5px;min-width:0;padding:5px 6px;background:var(--pn);color:var(--ink);border-radius:12px;box-shadow:0 3px 0 rgba(0,0,0,.22)}
 .mini.turn{box-shadow:0 0 0 3px var(--gold),0 3px 0 rgba(0,0,0,.22)}
-.mini .av{width:24px;height:24px;font-size:11px;border-width:1.5px}
+.mini .av{display:none}.mini{padding:5px 8px}
 .mn{flex:1;min-width:0;line-height:1.25}.mn b{display:block;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mn>span{display:flex;align-items:center;gap:3px;font:400 11.5px var(--fn);white-space:nowrap;overflow:hidden}.mn .chip{width:11px;height:11px;flex:none}
-.mn em{font:700 9.5px var(--f);font-style:normal;color:var(--sub);margin-left:auto;overflow:hidden;text-overflow:ellipsis}
+.mn>span{display:flex;align-items:center;gap:4px;font:400 11.5px var(--fn);white-space:nowrap;overflow:hidden;padding:2px 0 2px 2px}.mn .chip{width:11px;height:11px;flex:none;box-shadow:inset 0 0 0 2px var(--gold),0 0 0 1px var(--ink)}
+.mn em{flex:none;font:700 10px var(--f);font-style:normal;color:var(--sub);margin-left:auto;overflow:hidden;text-overflow:ellipsis}
 .cup{flex:none;align-self:center;font-size:12px;font-weight:700;color:var(--on);opacity:.85}
 .champ{flex:none;text-align:center;background:var(--gold);color:var(--ink);border:3px solid var(--ink);border-radius:16px;padding:10px;box-shadow:0 6px 0 rgba(0,0,0,.25)}.champ b{display:block;font:400 26px var(--fn)}.champ span{font-size:12px;font-weight:700}
 .upd{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);z-index:200;background:var(--gold);color:var(--ink);border:2px solid var(--ink);border-radius:999px;padding:8px 16px;font-weight:700;font-size:13px;box-shadow:0 4px 0 rgba(0,0,0,.25)}
@@ -185,7 +185,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-21g"; // 新しい版を出したら変える
+const VER="2026-11-21h"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
