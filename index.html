@@ -143,7 +143,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       <div class="lbl">遊び方</div>
       <ul class="rules">
         <li><i>1</i><span>2人とも記事を引く。気に入らなければ引き直し（10回まで。前の記事には戻れない）</span></li>
-        <li><i>2</i><span>2人とも決めたら、相手の記事が見えないまま賭ける。チップは1000枚、毎回10枚の参加料。チェック・ベット・コール・レイズ・フォールド、ブラフもあり</span></li>
+        <li><i>2</i><span>2人とも決めたら、相手の記事が見えないまま賭ける。チップは1000枚、毎回50枚の参加料。チェック・ベット・コール・レイズ・フォールド、ブラフもあり</span></li>
         <li><i>3</i><span>賭けが決まったら、審判が名前を伏せた2枚から強そうな方を選ぶ。勝った方がポットを取る</span></li>
       </ul>
     </div>
@@ -180,7 +180,7 @@ const rounds={};
 let R=1;
 let local={r:0,draws:0,cur:null,decided:false,busy:false,amt:null};
 const R_=r=>rounds[r]||(rounds[r]={picks:{},votes:{},draws:{},acts:[],reset:false});
-const ANTE=10,START=1000;
+const ANTE=50,START=1000;
 const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h};
 const av=id=>{const p=players.get(id)||{name:"?"};return `<div class="av" style="background:hsl(${hue(p.name)} 70% 72%)">${esc((p.name||"?").slice(0,1))}</div>`};
 const nm=id=>esc((players.get(id)||{}).name||"?");
