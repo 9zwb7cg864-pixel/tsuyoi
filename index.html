@@ -226,7 +226,8 @@ function render(){
   // 成績
   const H=s.length===2?history_(s,J):{st:{},wins:{}},wins=H.wins,st=H.st;
   const both0=s.length===2&&x.picks[s[0]]&&x.picks[s[1]],B=both0?betState(R,s,st):null;
-  const left=i=>B?st[i]-B.c[i]:st[i];
+  const Z=B&&B.done?outcome(R,s,J,st):null;
+  const left=i=>Z?st[i]+(Z.w===i?Z.stake:-Z.stake):B?st[i]-B.c[i]:st[i];
   const sc=s.map(i=>`<span><span class="dot${online(i)?"":" off"}"></span>${esc(players.get(i).name)}${i===myId?"（あなた）":""}：<b>${wins[i]||0}勝</b>　チップ <b>${left(i)}</b></span>`).join("");
   $("who").innerHTML=s.length<2?"相手を待っています。招待リンクを送ってください":s.map(i=>esc(players.get(i).name)).join(" vs ")+"　審判："+(J?esc(players.get(J).name)+(isJ?"（あなた）":""):"まだいません")+(isP||isJ?"":"（観戦中）");
   let h=`<div class="row top"><div class="big" style="font-size:18px">第${R}戦</div><div class="score">${sc}</div></div>`;
