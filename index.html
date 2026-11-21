@@ -187,8 +187,17 @@ const nm=id=>esc((players.get(id)||{}).name||"?");
 function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),1800)}
 
 $("fr").onclick=()=>{$("frbox").classList.toggle("hide");if(!$("frbox").classList.contains("hide"))$("rc").focus()};
-$("enter").onclick=()=>enterRoom($("rc").value.trim().replace(/\D/g,"").slice(0,8));
+$("enter").onclick=()=>pickRole($("rc").value.trim().replace(/\D/g,"").slice(0,8));
 function needName(){if($("nm").value.trim())return false;$("nm").focus();toast("先に名前を入れてください");return true}
+let myRole="player";
+function pickRole(rm){ // 部屋に入る前に、対戦者か審判かを選ぶ
+  if(needName())return;if(!rm){$("rc").focus();return}
+  const d=document.createElement("div");
+  d.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:99";
+  d.innerHTML=`<div style="background:#fff;border-radius:16px;padding:20px;width:min(300px,86vw);text-align:center"><div style="font-weight:700;margin-bottom:12px">役職を選んでください</div><div style="display:grid;gap:8px"><button class="big pri" data-r="player">対戦する</button><button class="big" data-r="judge">審判をする</button></div></div>`;
+  d.onclick=e=>{const b=e.target.closest("button[data-r]");if(!b){if(e.target===d)d.remove();return}myRole=b.dataset.r;d.remove();enterRoom(rm)};
+  document.body.appendChild(d);
+}
 function enterRoom(rm,ord){
   if(needName())return;
   me=$("nm").value.trim().slice(0,12);room=rm;if(!room){$("rc").focus();return}
@@ -213,7 +222,7 @@ const LOBBY="tsyoi-lobby";
 function lpost(m){m.id=myId;m.name=$("nm").value.trim().slice(0,12);return fetch(RELAY+LOBBY,{method:"POST",body:JSON.stringify(m)}).catch(()=>{})}
 $("rm").onclick=startMatch;
 function startMatch(){
-  if(needName())return;store.set("tsy-name",$("nm").value.trim().slice(0,12));
+  if(needName())return;store.set("tsy-name",$("nm").value.trim().slice(0,12));myRole="player";
   matching=true;myWantAt=Date.now()/1000;$("rmw").classList.remove("hide");$("btns").classList.add("hide");$("frbox").classList.add("hide");seatsUI(1);
   lws=new WebSocket(RELAY.replace("https","wss")+LOBBY+"/ws?since=90s");
   lws.onmessage=e=>{let ev;try{ev=JSON.parse(e.data)}catch(_){return}if(ev.event!=="message")return;let m;try{m=JSON.parse(ev.message)}catch(_){return}lhandle(m,ev.time)};
@@ -255,7 +264,7 @@ function connect(){
   ws.onclose=()=>{setTimeout(connect,Math.min(15000,1000*2**retry++))};
 }
 async function send(m){
-  m.id=myId;m.name=me;
+  m.id=myId;m.name=me;m.role=myRole;
   try{await fetch(RELAY+"tsyoi-"+room,{method:"POST",body:JSON.stringify(m)})}catch(e){toast("送れませんでした。電波を確認してください")}
 }
 function hello(){send({t:"hello",r:R,draws:local.r===R?local.draws:0})}
@@ -264,7 +273,7 @@ function handle(m,time){
   if(!m||typeof m.id!=="string")return;
   const p=players.get(m.id)||{name:"",first:time,last:0};
   if(!p.first)p.first=time;
-  p.name=String(m.name||"").slice(0,12);p.last=Math.max(p.last,time);players.set(m.id,p);
+  p.name=String(m.name||"").slice(0,12);p.last=Math.max(p.last,time);if(m.role)p.role=String(m.role);players.set(m.id,p);
   const r=Number(m.r)||1;
   if(m.t==="chat")addmsg(p.name,String(m.text||"").slice(0,200),m.id===myId);
   else if(m.t==="hello"||m.t==="draw"){R_(r).draws[m.id]=Math.max(R_(r).draws[m.id]||0,Number(m.draws)||0)}
@@ -283,10 +292,11 @@ let fixedOrder=(q.get("o")||"").split(".").filter(Boolean); // ランダムマ�
 function order(){ // 先に来た2人が対戦者、3人目が審判、4人目からは観戦（抜けた人は審判・観戦の列から外す）
   if(fixedOrder.length===3){const rest=[...players.keys()].filter(i=>!fixedOrder.includes(i)&&!players.get(i).left).sort((a,b)=>players.get(a).first-players.get(b).first);return [...fixedOrder,...rest]}
   const o=[...players.entries()].filter(([,p])=>Date.now()/1000-p.last<3*3600||p.left).sort((a,b)=>a[1].first-b[1].first).map(x=>x[0]);
-  return [...o.slice(0,2),...o.slice(2).filter(i=>!players.get(i).left)];
+  const pl=o.filter(i=>players.get(i).role!=="judge"), jud=o.filter(i=>players.get(i).role==="judge"&&!players.get(i).left);
+  return [...pl.slice(0,2),...jud,...pl.slice(2).filter(i=>!players.get(i).left)]; // 審判志望の人が先に審判の席へ
 }
-const seats=()=>order().slice(0,2);
-const judgeId=()=>{const rest=order().slice(2);return rest.find(i=>online(i))||rest[0]}; // 審判が抜けたら、次にいる人が審判
+const seats=()=>order().filter(i=>players.get(i).role!=="judge").slice(0,2);
+const judgeId=()=>{const c=order().filter(i=>!seats().includes(i));return c.find(i=>online(i))||c[0]}; // 審判が抜けたら、次にいる人が審判
 const online=id=>{const p=players.get(id);return p&&Date.now()/1000-p.last<40};
 
 async function draw(){
