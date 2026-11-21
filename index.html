@@ -66,14 +66,15 @@ input::placeholder{color:#a99d93}
 .log{font-size:12px;color:var(--onsub);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cards{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
 .cards.duo{grid-template-columns:repeat(2,minmax(0,1fr))}
-.cards.multi{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);overflow:hidden;gap:8px}
+.cards.multi{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(92px,1fr);overflow-y:auto;gap:8px}
 @media(min-width:900px){.cards.multi{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .cards.multi .cw{gap:3px}.cards.multi .card{box-shadow:0 4px 0 rgba(0,0,0,.28);border-width:2px;border-radius:12px}
-.cards.multi .card .img{flex:0 0 34%}.cards.multi .card .img:not([style]){display:none}
+.cards.multi .card .img{display:none}
 .cards.multi .card .tx{flex:1 1 auto;max-height:none;overflow:hidden;padding:6px 8px}
-.cards.multi .card h2{font-size:15px;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cards.multi .card h2{font-size:14px;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .cards.multi .card p{font-size:11.5px;line-height:1.45;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .cards.multi .card .meta{font-size:10.5px}
+.cards.multi .card.win{box-shadow:0 0 0 4px var(--gold),0 4px 0 rgba(0,0,0,.28)}
 .others{flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
 .others.n2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .mini{display:flex;align-items:center;gap:5px;min-width:0;padding:5px 6px;background:var(--pn);color:var(--ink);border-radius:12px;box-shadow:0 3px 0 rgba(0,0,0,.22)}
@@ -185,7 +186,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22a"; // 新しい版を出したら変える
+const VER="2026-11-22b"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -524,13 +525,14 @@ function render(){
   const bar=i=>pbar(i,left(i),{wins:(wins[i]||0)+(Z&&Z.w===i?1:0),txt:stat(i)},cls(i));
   const others=ro.filter(i=>i!==myId);
   const mini=i=>`<div class="mini ${cls(i)}">${av(i)}<div class="mn"><b>${nm(i)}</b><span><span class="chip"></span>${left(i)}<em>${stat(i)||((wins[i]||0)+(Z&&Z.w===i?1:0))+"勝"}</em></span></div></div>`;
-  h+=others.length>1?`<div class="others${others.length===2||others.length===4?" n2":""}">${others.map(mini).join("")}</div>`:bar(others[0]);
+  const big=both&&B&&B.done&&ro.length>2; // 3人以上で記事を見せ合う場面：タイルと賭けの流れを隠して、記事に場所をゆずる
+  if(!big)h+=others.length>1?`<div class="others${others.length===2||others.length===4?" n2":""}">${others.map(mini).join("")}</div>`:bar(others[0]);
   h+=`<div class="mid">`;
   if(isJ)h+=`<div class="judge">あなたは審判です</div>`;
   h+=cupTag;
   if(both){
     h+=`<div class="potrow"><div class="pot"><span class="chips"><span class="chip" style="top:6px"></span><span class="chip" style="top:2px"></span><span class="chip" style="top:-2px"></span></span>${B.pot}</div></div>`;
-    if(B.log.length)h+=`<div class="log">${B.log.slice(-3).map(([i,t])=>nm(i)+"："+t).join("　→　")}</div>`;
+    if(B.log.length&&!big)h+=`<div class="log">${B.log.slice(-3).map(([i,t])=>nm(i)+"："+t).join("　→　")}</div>`;
   }
   let dock="";
   const waitNames=ro.filter(i=>!x.picks[i]).map(nm).join("・");
