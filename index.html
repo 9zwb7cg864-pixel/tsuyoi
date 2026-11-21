@@ -254,7 +254,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         <li><i>3</i><span>賭けが決まったら、審判が名前を伏せた記事からいちばん強そうなものを選ぶ。勝った人がポットを取る</span></li>
       </ul>
     </div>
-    <p class="foot">記事の文章と画像は <a href="https://ja.wikipedia.org/">ウィキペディア日本語版</a> より（<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ja">CC BY-SA 4.0</a>）。チャットは12時間で消えます。</p>
+    <p class="foot">記事の文章と画像は <a href="https://ja.wikipedia.org/">ウィキペディア日本語版</a> より（<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ja">CC BY-SA 4.0</a>）。チャットは12時間で消えます。効果音は Kenney（CC0）と、"Oculus Audio Pack 01" by Oculus VR, LLC（<a href="https://developers.meta.com/vr/downloads/package/oculus-audio-pack-1/" target="_blank" rel="noopener">配布元</a>、CC BY 4.0、mp3に変換）。</p>
   </div>
 
   <div class="table hide" id="game"></div>
@@ -268,7 +268,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22j"; // 新しい版を出したら変える
+const VER="2026-11-22k"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -465,7 +465,7 @@ const fresh=()=>Date.now()/1000-lastEvt<12;
 // 効果音（Kenney の CC0 素材）。最初のタップで鳴らせるようになる
 const SND={ctx:null,buf:{},on:store.get("tsy-snd")!=="0"};
 function sndInit(){if(SND.ctx)return;try{SND.ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return}
-  ["bet","call","raise","check","fold","flip","chips","allin","win","champ","turn","stamp"].forEach(n=>fetch("snd/"+n+".mp3?2").then(r=>r.arrayBuffer()).then(b=>new Promise((ok,ng)=>SND.ctx.decodeAudioData(b,ok,ng))).then(a=>{SND.buf[n]=a}).catch(()=>{}))}
+  ["bet","call","raise","check","fold","flip","chips","allin","win","champ","turn","stamp"].forEach(n=>fetch("snd/"+n+".mp3?3").then(r=>r.arrayBuffer()).then(b=>new Promise((ok,ng)=>SND.ctx.decodeAudioData(b,ok,ng))).then(a=>{SND.buf[n]=a}).catch(()=>{}))}
 const sndUnlock=()=>{sndInit();if(SND.ctx&&SND.ctx.state!=="running")SND.ctx.resume().catch(()=>{})}; // iPhoneは指を離したとき（touchend・click）でないと音が解禁されない
 ["pointerdown","pointerup","touchend","click","keydown"].forEach(ev=>addEventListener(ev,sndUnlock,{passive:true,capture:true}));
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&SND.ctx&&SND.ctx.state!=="running")SND.ctx.resume().catch(()=>{})});
