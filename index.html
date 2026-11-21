@@ -171,7 +171,7 @@ let myId=store.get("tsy-id"); // 端末に保存して、閉じても同じ人�
 if(!myId){myId=Math.random().toString(36).slice(2,10);store.set("tsy-id",myId)}
 if(location.hash==="#owner"){const t=prompt("AI審判の合言葉を入れてください");if(t)store.set("tsy-owner",t.trim());history.replaceState(null,"",location.pathname+location.search)}
 let aiOn=false,aiRunning=null; // AI審判（持ち主の端末だけ。合言葉は端末に保存）
-const JUDGE_URL="https://tsuyoi-judge.9zwb7cg864.workers.dev/";
+const JUDGE_URL="https://orange-bar-fd12.9zwb7cg864.workers.dev/";
 const q=new URLSearchParams(location.search);
 $("nm").value=store.get("tsy-name")||"";
 $("rc").value=q.get("r")||String(Math.floor(1000+Math.random()*9000));
