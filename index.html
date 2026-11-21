@@ -90,12 +90,25 @@ input::placeholder{color:#a99d93}
 .sheetin{width:min(420px,100%);background:var(--pn);color:var(--ink);border-radius:20px;padding:16px;display:grid;gap:10px;margin-bottom:env(safe-area-inset-bottom)}.sheetin b{text-align:center}
 .flipbox{flex:1;min-height:0;display:flex;position:relative;transform-style:preserve-3d;animation:flip .55s ease-out both;animation-delay:var(--d)}
 .flipbox>.card{animation:none;backface-visibility:hidden;width:100%}
+.flipbox.done{animation:none}.flipbox.done .fback{display:none}
 .fback{position:absolute;inset:0;border-radius:16px;border:3px solid var(--ink);background:repeating-linear-gradient(45deg,#1a1412 0 10px,#2b211d 10px 20px);transform:rotateY(180deg);backface-visibility:hidden}
 .cards.multi .fback{border-radius:12px;border-width:2px}
 @keyframes flip{from{transform:perspective(900px) rotateY(180deg)}to{transform:perspective(900px) rotateY(0)}}
 .icbtn.off{opacity:.45;text-decoration:line-through}
 @media(max-width:420px){.ingame .logo b{font-size:13px}.ingame .top{gap:5px;padding-left:10px;padding-right:10px}.ingame #topr{gap:4px!important}.ingame .icbtn{padding:0 7px;min-width:30px}}
 .sheetin{max-height:88dvh;overflow-y:auto}
+.theme{flex:none;align-self:center;display:flex;align-items:center;gap:8px;padding:3px 6px 3px 14px;border-radius:999px;background:var(--ink);color:var(--on);font-size:11.5px;font-weight:700}
+.theme b{font:400 17px/1.3 var(--fn);color:var(--gold)}.theme i{font-style:normal;font-size:10.5px;color:var(--ink);background:var(--on);border-radius:999px;padding:2px 8px}
+.stgrid.th{grid-template-columns:repeat(2,minmax(0,1fr))}.stgrid.th .big{min-height:44px;font-size:14px}
+.tm{font-weight:900;color:var(--ink);white-space:nowrap}.tm.hot{color:var(--bg)}
+.tbl{flex:none;display:flex;justify-content:center;gap:6px}
+.ts{flex:1;max-width:76px;min-width:0;display:flex;flex-direction:column;align-items:center;padding:3px 2px;border-radius:10px;color:var(--on)}
+.ts.on{background:rgba(26,20,18,.28);box-shadow:0 0 0 2px var(--gold)}.ts.fd{opacity:.4}
+.tstk{position:relative;width:30px;height:32px}
+.sc.s{width:30px;height:4px;border-radius:1.5px;background:repeating-linear-gradient(90deg,var(--c) 0 5px,var(--m) 5px 8px)}
+.ts b{font:400 13px/1.3 var(--fn)}.ts span{font-size:10.5px;font-weight:700;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9}
+.chip.fly{position:fixed;z-index:260;pointer-events:none;transition:transform .65s cubic-bezier(.4,.05,.2,1)}
+.champ span{line-height:1.5}
 .cuprow{flex:none;display:flex;align-items:center;justify-content:center;gap:10px}
 .stb{flex:none;min-height:28px;padding:0 12px;border-radius:999px;background:var(--pn);color:var(--ink);border:2px solid var(--ink);font-size:12px;font-weight:900;box-shadow:0 3px 0 rgba(0,0,0,.25)}
 .stgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -251,7 +264,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         <label class="lbl" for="rc">部屋番号（同じ番号の人と対戦。2〜6人。審判は部屋の中で選ぶ）</label>
         <div style="display:flex;gap:8px"><input id="rc" maxlength="8" inputmode="numeric"><button class="big pri" id="enter" style="flex:none;padding:0 22px;min-height:48px">入る</button></div>
       </div>
-      <div class="wait hide" id="rmw"><div class="seats" id="seats"></div><b id="rmn">探しています…</b><span class="lead">3人そろったら始まります。審判は3人の中からランダム。</span><button class="big ghost" id="rmc" style="min-height:44px;padding:0 24px">やめる</button></div>
+      <div class="wait hide" id="rmw"><div class="seats" id="seats"></div><b id="rmn">探しています…</b><span class="lead">3人そろったら始まります。2人が対戦して1人が審判。審判は毎回交代します。</span><button class="big ghost" id="rmc" style="min-height:44px;padding:0 24px">やめる</button></div>
     </div>
     <div class="box">
       <div class="lbl">遊び方</div>
@@ -275,7 +288,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22o"; // 新しい版を出したら変える
+const VER="2026-11-22p"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -443,7 +456,7 @@ async function aiJudge(ord,picks){ // 持ち主の端末でGeminiに判定して
   if(R!==r0||R_(R).votes[AI_ID]){aiRunning=null;return}
   const items=ord.map(i=>({title:(picks[i]||{}).title,extract:(picks[i]||{}).ext}));
   try{
-    const res=await fetch(JUDGE_URL,{method:"POST",body:JSON.stringify({token:store.get("tsy-owner"),items})});
+    const res=await fetch(JUDGE_URL,{method:"POST",body:JSON.stringify({token:store.get("tsy-owner"),items,theme:themeOf(R)})});
     const d=await res.json().catch(()=>({}));
     if(!res.ok){toast(d.error==="limit"?"AI審判は今日の分が終わりました":"AI審判がうまく動きませんでした");setAi(false);return}
     const k=LAB.indexOf(String(d.winner||"").trim().toUpperCase()),w=ord[k>=0&&k<ord.length?k:0];
@@ -542,6 +555,55 @@ function fxChamp(name,cup,times){ // 光の筋の舞台にトロフィーが落�
   let closed=false;const close=()=>{if(closed)return;closed=true;T.forEach(clearTimeout);clearInterval(rain);clearInterval(twinkle);d.classList.add("out");setTimeout(()=>d.remove(),450)};
   T.push(setTimeout(()=>{d.onclick=close},1000));setTimeout(close,7500);
 }
+// ---- お題（戦ごとに「強そう」以外でも勝負できる） ----
+const THEMES=["強そう","モテそう","高そう","怖そう","賢そう","おいしそう","速そう","かわいい","でかい","えらそう"];
+const themeSet=[];
+function themeOf(r){let c={mode:"fixed",k:0};for(const t of themeSet)if(t.from<=r)c=t;
+  if(c.mode==="rand"){let v=0;for(const ch of room+":"+r)v=(v*131+ch.charCodeAt(0))>>>0;return THEMES[v%THEMES.length]}return THEMES[c.k]||THEMES[0]}
+function themeSheet(){const d=document.createElement("div");d.className="sheet";
+  d.innerHTML=`<div class="sheetin"><b>お題を選ぶ</b><button class="big pri" data-th="rand">毎回ランダム</button><div class="stgrid th">${THEMES.map((t,i)=>`<button class="big sec" data-th="${i}">${t}</button>`).join("")}</div><button class="big ghost">閉じる</button></div>`;
+  d.onclick=e=>{const b=e.target.closest("button");if(!b&&e.target!==d)return;if(b&&b.dataset.th!=null)send({t:"theme",r:R,mode:b.dataset.th==="rand"?"rand":"fixed",k:Number(b.dataset.th)||0});d.remove()};document.body.appendChild(d)}
+// ---- 持ち時間（賭けは30秒でチェックかフォールド、記事選びは90秒で自動決定） ----
+const TLIM=30,PLIM=90;let TURN=null,PICKT=null;
+function tick(){
+  if(TURN){if(TURN.r!==R){TURN=null}else{const e=Date.now()-TURN.since;
+    if(!TURN.sent&&e>=TLIM*1000+(TURN.to===myId?0:TURN.jit)){TURN.sent=true;postAs(TURN.to,{t:"act",r:R,a:TURN.owe?"fold":"check",amt:0})}}}
+  if(PICKT&&PICKT.r===R&&!local.decided&&!local.busy&&Date.now()-PICKT.since>=PLIM*1000){if(local.cur)decide();else draw().then(()=>{if(local.cur&&!local.decided)decide()})}
+  if(TURN||PICKT)render();
+}
+setInterval(tick,1000);
+// ---- 勝った人へチップが飛ぶ ----
+function flyChips(w){const a=document.querySelector("#game .pot"),b=document.querySelector(`#game [data-pid="${w}"]`)||document.querySelector("#game .card.win");if(!a||!b)return;
+  const A=a.getBoundingClientRect(),Q=b.getBoundingClientRect();snd("chips",.8);
+  for(let k=0;k<14;k++){const d=document.createElement("i");d.className="chip fly";const x0=A.left+A.width/2-8+(Math.random()-.5)*36,y0=A.top+A.height/2-8;
+    d.style.cssText=`left:${x0}px;top:${y0}px;transition-delay:${k*45}ms`;document.body.appendChild(d);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{d.style.transform=`translate(${Q.left+Math.min(Q.width/2,60)-8-x0+(Math.random()-.5)*26}px,${Q.top+Q.height/2-8-y0}px)`}));
+    setTimeout(()=>d.remove(),1300+k*45)}}
+const miniStack=v=>{const out=[];for(const d of [500,100,50,10]){while(v>=d&&out.length<10){out.push(d);v-=d}}return out.map((d,k)=>`<i class="sc s c${d}" style="bottom:${k*3}px"></i>`).join("")};
+// ---- 結果を1枚の画像にして共有 ----
+let LASTRES=null;
+async function shareResult(){const L=LASTRES;if(!L)return;const x=R_(L.r),W=1200,HH=675,c=document.createElement("canvas");c.width=W;c.height=HH;const g=c.getContext("2d");
+  try{await document.fonts.load('40px "Dela Gothic One"');await document.fonts.load('700 20px "Zen Kaku Gothic New"')}catch(e){}
+  const FN='"Dela Gothic One",sans-serif',F='"Zen Kaku Gothic New","Hiragino Sans",sans-serif',name=i=>(players.get(i)||{}).name||"?";
+  const rr=(X,Y,w,h,r)=>{g.beginPath();g.moveTo(X+r,Y);g.arcTo(X+w,Y,X+w,Y+h,r);g.arcTo(X+w,Y+h,X,Y+h,r);g.arcTo(X,Y+h,X,Y,r);g.arcTo(X,Y,X+w,Y,r);g.closePath()};
+  const wrap=(t,maxW,maxL)=>{const ls=[];let cur="";for(const ch of String(t||"")){if(g.measureText(cur+ch).width>maxW&&!"、。」）！？".includes(ch)){ls.push(cur);cur=ch;if(ls.length===maxL)break}else cur+=ch}if(ls.length<maxL&&cur)ls.push(cur);else if(ls.length===maxL&&cur)ls[maxL-1]=ls[maxL-1].slice(0,-1)+"…";return ls};
+  g.fillStyle="#d7372b";g.fillRect(0,0,W,HH);
+  g.fillStyle="#fff7ec";g.font="40px "+FN;g.textBaseline="alphabetic";g.fillText("ツヨペディア",48,74);
+  g.font="26px "+FN;const tt="お題　"+L.theme,tw=g.measureText(tt).width+44;g.fillStyle="#1a1412";rr(W-48-tw,36,tw,52,26);g.fill();g.fillStyle="#ffcf3f";g.fillText(tt,W-48-tw+22,72);
+  const why=x.reason?"AI審判："+x.reason:L.how.replace(/&[a-z#0-9]+;/g,""),n=L.ord.length,cols=n<=3?n:Math.ceil(n/2),rows=Math.ceil(n/cols),top=112,areaH=HH-top-128,gap=18,cw=(W-96-(cols-1)*gap)/cols,chh=(areaH-(rows-1)*gap)/rows;
+  L.ord.forEach((i,k)=>{const X=48+(k%cols)*(cw+gap),Y=top+Math.floor(k/cols)*(chh+gap),a=x.picks[i]||{},win=i===L.w;
+    if(win){g.fillStyle="#ffcf3f";rr(X-8,Y-8,cw+16,chh+16,26);g.fill()}
+    g.fillStyle="#1a1412";rr(X,Y,cw,chh,20);g.fill();g.fillStyle="#fbf5e8";rr(X+5,Y+5,cw-10,chh-10,16);g.fill();
+    g.fillStyle="#6b5c55";g.font="700 20px "+F;g.fillText(wrap(name(i),cw-150,1)[0]||"",X+24,Y+42);
+    if(win){g.font="22px "+FN;const bw=g.measureText("勝ち").width+28;g.fillStyle="#1a1412";rr(X+cw-bw-18,Y+16,bw,38,19);g.fill();g.fillStyle="#ffcf3f";g.fillText("勝ち",X+cw-bw-4,Y+43)}
+    const one=rows===1,ts=one?(cols>2?40:48):30,es=one?26:20,el=one?38:30;g.fillStyle="#1a1412";g.font=ts+"px "+FN;let yy=Y+52+ts;for(const ln of wrap(a.title,cw-48,2)){g.fillText(ln,X+24,yy);yy+=ts*1.22}
+    g.fillStyle="#1a1412";g.font="500 "+es+"px "+F;yy+=8;for(const ln of wrap(a.ext,cw-48,Math.max(0,Math.floor((Y+chh-18-yy)/el)+1))){g.fillText(ln,X+24,yy);yy+=el}});
+  g.fillStyle="#fff7ec";g.font="700 24px "+F;let ry=HH-84;for(const ln of wrap(why,W-96,2)){g.fillText(ln,48,ry);ry+=34}
+  g.fillStyle="rgba(255,247,236,.75)";g.font="500 18px "+F;const u="9zwb7cg864-pixel.github.io/tsuyoi";g.fillText(u,W-48-g.measureText(u).width,HH-18);
+  const blob=await new Promise(ok=>c.toBlob(ok,"image/png")),file=new File([blob],"tsuyopedia.png",{type:"image/png"});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:"ツヨペディアで勝負！お題「"+L.theme+"」 https://9zwb7cg864-pixel.github.io/tsuyoi/"});return}}catch(e){if(e&&e.name==="AbortError")return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tsuyopedia.png";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);toast("画像を保存しました");
+}
 function handle(m,time){
   if(!m||typeof m.id!=="string")return;
   const p=players.get(m.id)||{name:"",first:time,last:0};
@@ -551,7 +613,8 @@ function handle(m,time){
   if(m.t==="act"&&Date.now()/1000-time<10)snd({fold:"fold",check:"check",call:"call",raise:"raise",allin:"raise"}[m.a]||"bet");
   p.name=String(m.name||"").slice(0,12);p.last=Math.max(p.last,time);if(m.role)p.role=String(m.role);players.set(m.id,p);
   const r=Number(m.r)||1;
-  if(m.t==="chat")addmsg(p.name,String(m.text||"").slice(0,200),m.id===myId);
+  if(m.t==="chat"){addmsg(p.name,String(m.text||"").slice(0,200),m.id===myId);if(m.id.startsWith("ai-"))R_(r).reason=String(m.text||"").slice(0,200)}
+  else if(m.t==="theme"){const from=Object.keys(R_(r).picks).length?r+1:r,rand=m.mode==="rand",k=Math.max(0,Math.min(THEMES.length-1,Number(m.k)||0));themeSet.push({from,mode:rand?"rand":"fixed",k});sysmsg(p.name+" さんがお題を「"+(rand?"毎回ランダム":THEMES[k])+"」にしました"+(from>r?"（次の戦から）":""))}
   else if(m.t==="stamp"){if(Date.now()/1000-time<10)showStamp(p.name,Number(m.k))}
   else if(m.t==="hello"||m.t==="draw"){R_(r).draws[m.id]=Math.max(R_(r).draws[m.id]||0,Number(m.draws)||0)}
   else if(m.t==="pick"&&m.a&&typeof m.a.title==="string"){R_(r).picks[m.id]=m.a;R_(r).draws[m.id]=Number(m.draws)||MAXDRAW}
@@ -572,12 +635,14 @@ function order(){ // 来た順。抜けた人は外す
   return [...players.entries()].filter(([,p])=>!p.left&&Date.now()/1000-p.last<3*3600).sort((a,b)=>a[1].first-b[1].first).map(x=>x[0]);
 }
 function seats(){ // 対戦者：審判を選んでいない人を、来た順に最大6人
-  if(fixedOrder.length===3)return fixedOrder.slice(0,2);
   const out=history_(null).busted; // 脱落した人は、この大会が終わるまで座れない
+  if(fixedOrder.length===3){ // ランダムマッチ：3人のうち1人が審判。審判は毎回交代し、脱落した人がいればその人が審判
+    const al=fixedOrder.filter(i=>!out.has(i));if(al.length<3)return al.length===2?al:fixedOrder.slice(0,2);
+    const j=fixedOrder[(R-1)%3];return fixedOrder.filter(i=>i!==j)}
   return order().filter(i=>players.get(i).role!=="judge"&&!i.startsWith("ai-")&&!out.has(i)).slice(0,MAXP);
 }
 const judgeId=()=>{
-  if(fixedOrder.length===3&&!order().some(i=>i.startsWith("ai-")&&online(i)))return fixedOrder[2];
+  if(fixedOrder.length===3&&!order().some(i=>i.startsWith("ai-")&&online(i))){const sq=seats();return fixedOrder.find(i=>!sq.includes(i))}
   const c=order().filter(i=>!seats().includes(i)&&(players.get(i).role==="judge"||i.startsWith("ai-")));
   return c.find(i=>i.startsWith("ai-")&&online(i))||c.find(i=>online(i))||c[0];
 };
@@ -648,26 +713,27 @@ function outcome(r,ro,j,st){
   return{w:v,d,gain:d[v],how:"審判 "+esc((players.get(vid)||{}).name||"?")+" さんの判定"};
 }
 function history_(j){ // R戦の始まりまでのチップと勝ち数。勝ち抜け：0枚になったら脱落、最後の1人で優勝して次の大会へ
-  let st={};const wins={},champs={};let cup=1,cs=1;const S=i=>{if(st[i]==null)st[i]=START};
+  let st={},outs=[];const wins={},champs={};let cup=1,cs=1;const S=i=>{if(st[i]==null)st[i]=START};
   for(let r=1;r<=R;r++){
-    if(rounds[r]&&rounds[r].reset){st={};cup++;cs=r}
+    if(rounds[r]&&rounds[r].reset){st={};cup++;cs=r;outs=[]}
+    if(fixedOrder.length===3)fixedOrder.forEach(S);
     anteOf[r]=ANTES[Math.min(ANTES.length-1,Math.floor((r-cs)/3))];anteUp[r]=r>cs&&(r-cs)%3===0&&(r-cs)/3<ANTES.length;
     if(r===R)break;
     const x=rounds[r];if(!x)continue;
     const ro=roster(r);ro.forEach(S);
     const z=outcome(r,ro,j,st);if(!z)continue;
-    wins[z.w]=(wins[z.w]||0)+1;ro.forEach(i=>st[i]+=z.d[i]);
+    wins[z.w]=(wins[z.w]||0)+1;ro.forEach(i=>st[i]+=z.d[i]);ro.forEach(i=>{if(st[i]<=0&&!outs.includes(i))outs.push(i)});
     const ks=Object.keys(st),alive=ks.filter(i=>st[i]>0);
-    if(ks.length>=2&&alive.length===1){champs[alive[0]]=(champs[alive[0]]||0)+1;st={};cup++;cs=r+1}
+    if(ks.length>=2&&alive.length===1){champs[alive[0]]=(champs[alive[0]]||0)+1;st={};cup++;cs=r+1;outs=[]}
   }
   const busted=new Set(Object.keys(st).filter(i=>st[i]<=0));
-  return{st:new Proxy(st,{get:(o,k)=>o[k]==null?START:o[k]}),raw:st,wins,champs,cup,busted};
+  return{st:new Proxy(st,{get:(o,k)=>o[k]==null?START:o[k]}),raw:st,wins,champs,cup,busted,outs};
 }
 const blindOrder=(ids)=>{const h=s=>{let v=0;for(const ch of s+":"+R)v=(v*131+ch.charCodeAt(0))>>>0;return v};return [...ids].sort((a,b)=>h(a)-h(b))};
 const LAB="ABCDEF";
 
 function pbar(i,st,status,cls){
-  return `<div class="pbar">${av(i)}<div class="pn"><b>${nm(i)}${i===myId?"（あなた）":""}</b><span>${online(i)?"":"オフライン・"}${status.wins||0}勝</span></div><div class="stack"><span class="chip"></span>${st}</div>${status.txt?`<div class="st ${cls||""}">${status.txt}</div>`:""}</div>`;
+  return `<div class="pbar" data-pid="${i}">${av(i)}<div class="pn"><b>${nm(i)}${i===myId?"（あなた）":""}</b><span>${online(i)?"":"オフライン・"}${status.wins||0}勝</span></div><div class="stack"><span class="chip"></span>${st}</div>${status.txt?`<div class="st ${cls||""}">${status.txt}</div>`:""}</div>`;
 }
 
 function render(){
@@ -684,9 +750,13 @@ function render(){
     return paint(g,h);
   }
   const H=history_(J),wins=H.wins,st=H.st;
-  const cupTag=`<div class="cuprow"><div class="cup">第${H.cup}大会　残り${Object.keys(H.raw).length?Object.keys(H.raw).filter(i=>H.raw[i]>0).length:ro.length}人　参加料${anteOf[R]||ANTE}枚${anteUp[R]?"（アップ！）":""}</div><button class="stb" id="stb">スタンプ</button></div>`;
+  const TH=themeOf(R);
+  const cupTag=`<button class="theme" id="thb">お題<b>${TH}</b><i>変える</i></button><div class="cuprow"><div class="cup">第${H.cup}大会　残り${Object.keys(H.raw).length?Object.keys(H.raw).filter(i=>H.raw[i]>0).length:ro.length}人　参加料${anteOf[R]||ANTE}枚${anteUp[R]?"（アップ！）":""}</div><button class="stb" id="stb">スタンプ</button></div>`;
   const both=allPicked(R),B=both?betState(R,ro,st):null;
   const Z=B&&B.done?outcome(R,ro,J,st):null;
+  if(B&&!B.done&&B.to){const key=R+":"+x.acts.length+":"+B.to;if(!TURN||TURN.key!==key)TURN={key,to:B.to,since:Date.now(),owe:B.H-B.c[B.to]>0,r:R,jit:4000+Math.random()*4000}}else TURN=null;
+  if(isP&&!both&&!local.decided){if(!PICKT||PICKT.r!==R)PICKT={r:R,since:Date.now()}}else if(both||!isP)PICKT=null;
+  const tleft=TURN?Math.max(0,TLIM-Math.floor((Date.now()-TURN.since)/1000)):0,pleft=PICKT?Math.max(0,PLIM-Math.floor((Date.now()-PICKT.since)/1000)):0;
   if(cpus.length)cpuTick(ro,x,both,B,st);
   if(kicked.size)kickTick(B);
   const left=i=>Z?st[i]+Z.d[i]:B?st[i]-B.c[i]:st[i];
@@ -694,19 +764,20 @@ function render(){
   const stat=i=>{
     if(!both)return x.picks[i]?"決定済み":(x.draws[i]||0)?(x.draws[i]+"回目"):"考え中";
     if(Z)return Z.w===i?"勝ち":(B.folded.has(i)?"フォールド":"");
-    if(!B.done)return B.to===i?"考え中…":lastAct(i)||"待ち";
+    if(!B.done)return B.to===i?"考え中 "+tleft:lastAct(i)||"待ち";
     return lastAct(i);
   };
   const cls=i=>both&&B&&!B.done&&B.to===i?"turn":"";
   const bar=i=>pbar(i,left(i),{wins:(wins[i]||0)+(Z&&Z.w===i?1:0),txt:stat(i)},cls(i));
   const others=ro.filter(i=>i!==myId);
-  const mini=i=>`<div class="mini ${cls(i)}">${av(i)}<div class="mn"><b>${nm(i)}</b><span><span class="chip"></span>${left(i)}<em>${stat(i)||((wins[i]||0)+(Z&&Z.w===i?1:0))+"勝"}</em></span></div></div>`;
+  const mini=i=>`<div class="mini ${cls(i)}" data-pid="${i}">${av(i)}<div class="mn"><b>${nm(i)}</b><span><span class="chip"></span>${left(i)}<em>${stat(i)||((wins[i]||0)+(Z&&Z.w===i?1:0))+"勝"}</em></span></div></div>`;
   const big=both&&B&&B.done&&ro.length>2; // 3人以上で記事を見せ合う場面：タイルと賭けの流れを隠して、記事に場所をゆずる
   if(!big)h+=others.length>1?`<div class="others${others.length===2||others.length===4?" n2":""}">${others.map(mini).join("")}</div>`:bar(others[0]);
   h+=`<div class="mid">`;
   if(isJ)h+=`<div class="judge">あなたは審判です</div>`;
   h+=cupTag;
   if(both){
+    if(!B.done)h+=`<div class="tbl">${ro.map(i=>`<div class="ts${B.folded.has(i)?" fd":""}${B.to===i?" on":""}"><div class="tstk">${miniStack(B.c[i])}</div><b>${B.c[i]}</b><span>${nm(i)}</span></div>`).join("")}</div>`;
     h+=`<div class="potrow"><div class="pot"><span class="chips"><span class="chip" style="top:6px"></span><span class="chip" style="top:2px"></span><span class="chip" style="top:-2px"></span></span>${B.pot}</div></div>`;
     B.log.forEach(([i,t],k)=>{const key="a"+R+":"+k;if(/オールイン/.test(t)&&!fxDone.has(key)){fxDone.add(key);if(fresh())fxAllin((players.get(i)||{}).name||"",st[i])}});
     if(B.log.length&&!big)h+=`<div class="log">${B.log.slice(-3).map(([i,t])=>nm(i)+"："+t).join("　→　")}</div>`;
@@ -718,7 +789,7 @@ function render(){
       h+=`<div class="cards"><div class="cw"><div class="tag">あなたの記事　${local.cur?local.draws+"回目":""}</div>${local.cur?card(local.cur):`<div class="empty"><div><b>まだ引いていません</b>下のボタンでWikipediaのランダムな記事を引きます</div></div>`}</div></div>`;
       const lf=MAXDRAW-local.draws;
       if(!local.decided){
-        dock=local.cur?`<div class="left">引き直し 残り <b>${Math.max(0,lf)}</b> 回　前の記事には戻れません</div><div class="two"><button class="big ghost" id="bd" ${local.busy||lf<=0?"disabled":""}>${local.busy?"引いています…":"引き直す"}</button><button class="big pri" id="bk">これで勝負</button></div>`
+        dock=local.cur?`<div class="left">引き直し 残り <b>${Math.max(0,lf)}</b> 回　前の記事には戻れません${pleft<=30?"　あと"+pleft+"秒で決定":""}</div><div class="two"><button class="big ghost" id="bd" ${local.busy||lf<=0?"disabled":""}>${local.busy?"引いています…":"引き直す"}</button><button class="big pri" id="bk">これで勝負</button></div>`
           :`<button class="big pri" id="bd" ${local.busy?"disabled":""}>${local.busy?"引いています…":"1枚目を引く"}</button>`;
       }else dock=`<div class="msg">決定しました。${waitNames} さんを待っています</div>`;
     }else{
@@ -735,36 +806,38 @@ function render(){
         const canRaise=!capped&&room_>0&&!wait;if(canRaise)stackAmt=local.amt;
         const p=maxA>minA?Math.round((local.amt-minA)/(maxA-minA)*100):100;
         const raiseLbl=need>0?"レイズ":"ベット",allin=local.amt>=maxA;
-        dock=`<div class="msg">あなたの番です。ほかの人の記事は見えません</div>`;
+        dock=`<div class="msg">あなたの番です。ほかの人の記事は見えません　<b class="tm${tleft<=10?" hot":""}">あと${tleft}秒</b></div>`;
         if(canRaise)dock+=`<div class="amt"><div class="amth"><span class="lbl">${need>0?"上乗せする枚数":"賭ける枚数"}</span><b id="av">${local.amt}${allin?"（オールイン）":""}</b><button class="clr" id="clr">クリア</button></div>
           <div class="quick"><button data-q="${Math.floor(B.pot/2)}">½ポット</button><button data-q="${B.pot}">ポット</button><button data-q="${Math.floor(maxA/2)}">半分</button><button data-q="${maxA}">オールイン</button></div>
           <div class="chipsrow" id="cr" data-min="${minA}" data-max="${maxA}">${[10,50,100,500].map(v=>`<button class="cbtn c${v}" data-add="${v}" ${local.amt>=maxA?"disabled":""}><span>+${v}</span></button>`).join("")}</div></div>`;
         dock+=`<div class="acts">${need>0?`<button class="big ghost" data-act="fold" ${wait?"disabled":""}>フォールド</button><button class="big sec" data-act="call" ${wait?"disabled":""}>コール<small>${need}</small></button>`:`<button class="big ghost" disabled>フォールド</button><button class="big sec" data-act="check" ${wait?"disabled":""}>チェック</button>`}<button class="big pri" id="ra" data-lbl="${raiseLbl}" data-act="${allin?"allin":"raise"}" ${canRaise?"":"disabled"}>${allin?"オールイン":raiseLbl}<small>${canRaise?(allin?maxA:"+"+local.amt):"—"}</small></button></div>`;
       }else dock=`<div class="msg">${B.to?nm(B.to)+" さんの番です":"待っています"}</div>`;
     }else{
-      h+=`<div class="empty"><div><b>${ro.length}人が賭けています</b>${isJ?"賭けが決まったら、名前を伏せた記事が出ます":""}</div></div>`;
+      h+=`<div class="empty"><div><b>${B.to?nm(B.to)+" さんの番（あと"+tleft+"秒）":ro.length+"人が賭けています"}</b>${isJ?"賭けが決まったら、名前を伏せた記事が出ます":"観戦中。賭けが決まると、全員の記事が見られます"}</div></div>`;
     }
   }else{
     const blind=!isP&&!Z;
     const show=Z&&Z.fold?ro:B.alive,ord=blindOrder(show);
-    if(!fxDone.has("f"+R)){fxDone.add("f"+R);if(fresh())ord.forEach((_,k)=>snd("flip",.8,k*.6))}
-    if(Z&&!fxDone.has("w"+R)){fxDone.add("w"+R);if(fresh())snd("win",.9)}
+    if(!fxDone.has("f"+R)){fxDone.add("f"+R);if(fresh()&&!Z)ord.forEach((_,k)=>snd("flip",.8,k*.6))}
+    if(Z)LASTRES={r:R,ord,w:Z.w,theme:TH,how:Z.how};
+    if(Z&&!fxDone.has("w"+R)){fxDone.add("w"+R);if(fresh()){snd("win",.9);const w=Z.w;setTimeout(()=>flyChips(w),250)}}
     if(Z)h+=`<div class="banner"><b>${nm(Z.w)} の勝ち <em>+${Z.gain}</em></b><span>${Z.how}</span></div>`;
     h+=`<div class="cards ${ord.length>2?"multi":"duo"}">`+ord.map((i,k)=>{const lab=LAB[k];
-      return `<div class="cw"><div class="tag">${blind?"記事 "+lab:lab+"："+nm(i)+(i===myId?"（あなた）":"")+"　"+(x.draws[i]||"?")+"回目"+(B.folded.has(i)?"（フォールド）":"")}</div><div class="flipbox" style="--d:${(k*0.6).toFixed(1)}s"><div class="fback"></div>${card(x.picks[i],{win:Z&&Z.w===i})}</div></div>`}).join("")+`</div>`;
+      return `<div class="cw"><div class="tag">${blind?"記事 "+lab:lab+"："+nm(i)+(i===myId?"（あなた）":"")+"　"+(x.draws[i]||"?")+"回目"+(B.folded.has(i)?"（フォールド）":"")}</div><div class="flipbox${Z?" done":""}" style="--d:${(k*0.6).toFixed(1)}s"><div class="fback"></div>${card(x.picks[i],{win:Z&&Z.w===i})}</div></div>`}).join("")+`</div>`;
     if(!Z){
       if(aiOn&&J===AI_ID)aiJudge(ord,x.picks);
       if(J&&J.startsWith("ai-"))dock=`<div class="msg">AI審判が記事を読んでいます…</div>`;
-      else if(isJ)dock=`<div class="msg">名前は伏せてあります。いちばん強そうなものを選んでください</div><div class="${ord.length>2?"pickn":"two"}">${ord.map((i,k)=>`<button class="big pri" data-v="${i}">${LAB[k]} が強そう</button>`).join("")}</div>`;
+      else if(isJ)dock=`<div class="msg">名前は伏せてあります。お題「${TH}」にいちばん合うものを選んでください</div><div class="${ord.length>2?"pickn":"two"}">${ord.map((i,k)=>`<button class="big pri" data-v="${i}">${LAB[k]} が${TH}</button>`).join("")}</div>`;
       else dock=`<div class="msg">${J?"審判の判定を待っています":"審判がいません。だれかが「対戦中」を押して審判になるか、AI審判を入れてください"}</div>`;
     }else{
       const after={};Object.keys(H.raw).forEach(i=>after[i]=H.raw[i]);ro.forEach(i=>after[i]=left(i));
       const ks=Object.keys(after),alive=ks.filter(i=>after[i]>0),out=ro.filter(i=>left(i)<=0);
       if(ks.length>=2&&alive.length===1){
         if(!fxDone.has("c"+R)){fxDone.add("c"+R);if(fresh())setTimeout(()=>fxChamp((players.get(alive[0])||{}).name||"",H.cup,(H.champs[alive[0]]||0)+1),ro.length*600)}
-        h=h.replace('<div class="cards','<div class="champ"><b>'+nm(alive[0])+' 優勝！</b><span>第'+H.cup+'大会　'+((H.champs[alive[0]]||0)+1)+'回目の優勝</span></div><div class="cards');
-        dock=`<button class="big pri" id="nx">次の大会を始める（全員${START}枚）</button>`;
-      }else dock=(out.length?`<div class="msg">${out.map(nm).join("・")} さんが脱落しました</div>`:"")+`<button class="big pri" id="nx">もう一局</button>`;
+        const rank=[...H.outs,...out.filter(i=>!H.outs.includes(i))].reverse().map((i,k)=>(k+2)+"位 "+nm(i)).join("　");
+        h=h.replace('<div class="cards','<div class="champ"><b>'+nm(alive[0])+' 優勝！</b><span>第'+H.cup+'大会　'+((H.champs[alive[0]]||0)+1)+'回目の優勝'+(rank?'<br>'+rank:'')+'</span></div><div class="cards');
+        dock=`<div class="two"><button class="big ghost" id="sh">画像で共有</button><button class="big pri" id="nx">次の大会へ</button></div>`;
+      }else dock=(out.length?`<div class="msg">${out.map(nm).join("・")} さんが脱落しました</div>`:"")+`<div class="two"><button class="big ghost" id="sh">画像で共有</button><button class="big pri" id="nx">もう一局</button></div>`;
     }
   }
   h+=`</div>`;
@@ -790,7 +863,7 @@ function morph(a,b){ // 変わったところだけ差し替える（自分の�
 }
 function paint(g,h){
   if(h===lastH)return;lastH=h;const t=document.createElement("template");t.innerHTML=h;morph(g,t.content);
-  const stb=$("stb");if(stb)stb.onclick=stampSheet;
+  const stb=$("stb");if(stb)stb.onclick=stampSheet;const thb=$("thb");if(thb)thb.onclick=themeSheet;const sh=$("sh");if(sh)sh.onclick=shareResult;
   const bd=$("bd");if(bd)bd.onclick=draw;const bk=$("bk");if(bk)bk.onclick=decide;
   const nx=$("nx");if(nx)nx.onclick=()=>{R++;send({t:"next",r:R});render()};
   const rs=$("rs");if(rs)rs.onclick=()=>{R++;send({t:"next",r:R});send({t:"reset",r:R});render()};
