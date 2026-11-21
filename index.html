@@ -107,6 +107,7 @@ input::placeholder{color:#a99d93}
 .stbub b{font:400 clamp(20px,6vw,28px)/1.2 var(--fn);color:var(--ink);white-space:nowrap}
 .stampfx>span{font-size:11.5px;font-weight:700;color:var(--ink);background:var(--gold);border-radius:999px;padding:2px 9px;margin-left:4px}
 @keyframes stampfx{0%{opacity:0;transform:translateY(24px) scale(.5) rotate(-8deg)}10%{opacity:1;transform:scale(1.12) rotate(3deg)}18%{transform:none}80%{opacity:1;transform:translateY(-14px)}100%{opacity:0;transform:translateY(-40px)}}
+html,body,button,a,input,.card,.sheet{touch-action:manipulation}
 .fxcv{position:fixed;inset:0;width:100%;height:100%;z-index:320;pointer-events:none}
 .thud{animation:thud .4s cubic-bezier(.2,.8,.3,1)}
 @keyframes thud{0%{transform:none}18%{transform:translate(-5px,9px) scale(.985)}40%{transform:translate(4px,-4px)}62%{transform:translate(-2px,2px)}100%{transform:none}}
@@ -267,7 +268,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22i"; // 新しい版を出したら変える
+const VER="2026-11-22j"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -465,12 +466,15 @@ const fresh=()=>Date.now()/1000-lastEvt<12;
 const SND={ctx:null,buf:{},on:store.get("tsy-snd")!=="0"};
 function sndInit(){if(SND.ctx)return;try{SND.ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return}
   ["bet","call","raise","check","fold","flip","chips","allin","win","champ","turn","stamp"].forEach(n=>fetch("snd/"+n+".mp3?2").then(r=>r.arrayBuffer()).then(b=>new Promise((ok,ng)=>SND.ctx.decodeAudioData(b,ok,ng))).then(a=>{SND.buf[n]=a}).catch(()=>{}))}
-addEventListener("pointerdown",()=>{sndInit();if(SND.ctx&&SND.ctx.state==="suspended")SND.ctx.resume()},{passive:true});
-function snd(n,vol=1,delay=0){if(!SND.on||!SND.ctx||!SND.buf[n])return;try{const a=SND.ctx.createBufferSource(),g=SND.ctx.createGain();a.buffer=SND.buf[n];g.gain.value=vol;a.connect(g);g.connect(SND.ctx.destination);a.start(SND.ctx.currentTime+delay)}catch(e){}}
+const sndUnlock=()=>{sndInit();if(SND.ctx&&SND.ctx.state!=="running")SND.ctx.resume().catch(()=>{})}; // iPhoneは指を離したとき（touchend・click）でないと音が解禁されない
+["pointerdown","pointerup","touchend","click","keydown"].forEach(ev=>addEventListener(ev,sndUnlock,{passive:true,capture:true}));
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&SND.ctx&&SND.ctx.state!=="running")SND.ctx.resume().catch(()=>{})});
+document.addEventListener("dblclick",e=>e.preventDefault(),{passive:false});
+function snd(n,vol=1,delay=0){if(!SND.on||!SND.ctx||!SND.buf[n])return;try{if(SND.ctx.state!=="running")SND.ctx.resume().catch(()=>{});const a=SND.ctx.createBufferSource(),g=SND.ctx.createGain();a.buffer=SND.buf[n];g.gain.value=vol;a.connect(g);g.connect(SND.ctx.destination);a.start(SND.ctx.currentTime+delay)}catch(e){}}
 // スタンプ（チャットには残さず、全員の画面にポンと出す）
 const STAMPS=["つよい！","うそだろ","ナイス！","ブラフでしょ","はやく〜","やばい","おねがい","草"];
 let stampAt=0;
-const stImg=k=>`<img src="st/${k}.webp" alt="" onerror="this.remove()">`;
+const stImg=k=>`<img src="${JUDGE_URL}st/${k}" alt="" onerror="this.remove()">`;
 function sendStamp(k){const n=Date.now();if(n-stampAt<1500)return;stampAt=n;send({t:"stamp",r:R,k})}
 function showStamp(name,k){if(!STAMPS[k])return;const d=document.createElement("div");d.className="stampfx";d.style.left=(6+Math.random()*34)+"%";d.innerHTML=`<div class="stbub">${stImg(k)}<b>${esc(STAMPS[k])}</b></div><span>${esc(name)}</span>`;document.body.appendChild(d);setTimeout(()=>d.remove(),2600);snd("stamp",.7)}
 function stampSheet(){const d=document.createElement("div");d.className="sheet";
