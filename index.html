@@ -200,6 +200,7 @@ function enterRoom(rm,ord){
   $("topr").innerHTML=`<button class="icbtn" id="cp">招待</button><button class="icbtn" id="co">チャット<span class="badge hide" id="ub"></span></button>`;
   $("cp").onclick=async()=>{const u=location.origin+location.pathname+"?r="+room;try{await navigator.clipboard.writeText(u);toast("招待リンクをコピーしました")}catch(_){toast(u)}};
   $("co").onclick=()=>setChat(!chatOpen);
+  addEventListener("pagehide",()=>{try{navigator.sendBeacon(RELAY+"tsyoi-"+room,JSON.stringify({t:"leave",r:R,id:myId,name:me}))}catch(e){}});
   connect();setInterval(hello,12000);setInterval(render,5000);render();
 }
 function setChat(o){chatOpen=o;$("chat").classList.toggle("open",o);if(o){unread=0;badge();const l=$("log");l.scrollTop=l.scrollHeight;setTimeout(()=>$("ci").focus(),250)}}
@@ -274,13 +275,15 @@ function handle(m,time){
   else if(m.t==="next"&&r>R){R=r;sysmsg("第"+R+"戦スタート")}
   if(r>R&&m.t!=="hello")R=r;
   if(m.t==="join"&&m.id!==myId)sysmsg(p.name+" さんが入りました");
+  if(m.t==="leave"){p.left=true;p.last=0;if(m.id!==myId)sysmsg(p.name+" さんが抜けました")}else if(m.t==="join"||m.t==="hello")p.left=false;
   render();
 }
 
 let fixedOrder=(q.get("o")||"").split(".").filter(Boolean); // ランダムマッチで決まった役の順（対戦者2人、審判）
-function order(){ // 先に来た2人が対戦者、3人目が審判、4人目からは観戦
-  if(fixedOrder.length===3){const rest=[...players.keys()].filter(i=>!fixedOrder.includes(i)).sort((a,b)=>players.get(a).first-players.get(b).first);return [...fixedOrder,...rest]}
-  return [...players.entries()].filter(([,p])=>Date.now()/1000-p.last<3*3600).sort((a,b)=>a[1].first-b[1].first).map(x=>x[0]);
+function order(){ // 先に来た2人が対戦者、3人目が審判、4人目からは観戦（抜けた人は審判・観戦の列から外す）
+  if(fixedOrder.length===3){const rest=[...players.keys()].filter(i=>!fixedOrder.includes(i)&&!players.get(i).left).sort((a,b)=>players.get(a).first-players.get(b).first);return [...fixedOrder,...rest]}
+  const o=[...players.entries()].filter(([,p])=>Date.now()/1000-p.last<3*3600||p.left).sort((a,b)=>a[1].first-b[1].first).map(x=>x[0]);
+  return [...o.slice(0,2),...o.slice(2).filter(i=>!players.get(i).left)];
 }
 const seats=()=>order().slice(0,2);
 const judgeId=()=>{const rest=order().slice(2);return rest.find(i=>online(i))||rest[0]}; // 審判が抜けたら、次にいる人が審判
