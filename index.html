@@ -88,6 +88,22 @@ input::placeholder{color:#a99d93}
 .upd{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);z-index:200;background:var(--gold);color:var(--ink);border:2px solid var(--ink);border-radius:999px;padding:8px 16px;font-weight:700;font-size:13px;box-shadow:0 4px 0 rgba(0,0,0,.25)}
 .sheet{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;padding:16px}
 .sheetin{width:min(420px,100%);background:var(--pn);color:var(--ink);border-radius:20px;padding:16px;display:grid;gap:10px;margin-bottom:env(safe-area-inset-bottom)}.sheetin b{text-align:center}
+.flipbox{flex:1;min-height:0;display:flex;position:relative;transform-style:preserve-3d;animation:flip .55s ease-out both;animation-delay:var(--d)}
+.flipbox>.card{animation:none;backface-visibility:hidden;width:100%}
+.fback{position:absolute;inset:0;border-radius:16px;border:3px solid var(--ink);background:repeating-linear-gradient(45deg,#1a1412 0 10px,#2b211d 10px 20px);transform:rotateY(180deg);backface-visibility:hidden}
+.cards.multi .fback{border-radius:12px;border-width:2px}
+@keyframes flip{from{transform:perspective(900px) rotateY(180deg)}to{transform:perspective(900px) rotateY(0)}}
+.fx{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;background:rgba(26,20,18,.62);animation:dim 2.2s ease-out both}
+.fx>*{animation:pop 2.2s ease-out both}
+@keyframes dim{0%{opacity:0}10%{opacity:1}80%{opacity:1}100%{opacity:0}}
+.fx b{display:block;font:400 clamp(44px,13vw,84px)/1 var(--fn);color:var(--gold);-webkit-text-stroke:2px var(--ink);text-shadow:0 6px 0 var(--ink);white-space:nowrap}
+.fx span{display:inline-block;margin-top:8px;font-weight:900;font-size:16px;color:var(--ink);background:var(--pn);border:2px solid var(--ink);border-radius:999px;padding:4px 14px}
+.champfx,.champfx>*{animation-duration:4.2s}.champfx i{display:block;font-style:normal;font-size:84px;line-height:1}
+@keyframes pop{0%{opacity:0;transform:scale(.3)}12%{opacity:1;transform:scale(1.12)}20%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-20px)}}
+.shake{animation:shake .5s}
+@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-8px)}40%,60%{transform:translateX(8px)}}
+.conf{position:fixed;top:-20px;width:9px;height:14px;z-index:299;pointer-events:none;border-radius:2px;animation:fall linear both}
+@keyframes fall{to{top:105vh;transform:rotate(720deg) translateX(40px)}}
 .pickn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .cw{display:flex;flex-direction:column;gap:6px;min-height:0}
 .tag{flex:none;font-size:12px;font-weight:700;color:var(--on);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -186,7 +202,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22b"; // 新しい版を出したら変える
+const VER="2026-11-22c"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -345,7 +361,7 @@ function setAi(on){
 }
 async function aiJudge(ord,picks){ // 持ち主の端末でGeminiに判定してもらい、審判の票として送る
   const key=R+":"+ord.join();if(aiRunning===key)return;aiRunning=key;
-  const r0=R;await new Promise(r=>setTimeout(r,5000)); // 記事が出てから少し間を置く（みんなが見比べる時間）
+  const r0=R;await new Promise(r=>setTimeout(r,4000+ord.length*600)); // 記事が出てから少し間を置く（みんなが見比べる時間）
   if(R!==r0||R_(R).votes[AI_ID]){aiRunning=null;return}
   const items=ord.map(i=>({title:(picks[i]||{}).title,extract:(picks[i]||{}).ext}));
   try{
@@ -372,10 +388,25 @@ async function send(m){
 }
 function hello(){send({t:"hello",r:R,draws:local.r===R?local.draws:0})}
 
+// ---- 演出（オールイン・優勝）。今起きたことだけ（入り直しで昔の出来事を再生しない） ----
+let lastEvt=0;const fxDone=new Set();
+const fresh=()=>Date.now()/1000-lastEvt<12;
+function fxAllin(name){
+  const d=document.createElement("div");d.className="fx";d.innerHTML=`<b>オールイン！</b><span>${esc(name)}</span>`;document.body.appendChild(d);
+  document.body.classList.remove("shake");void document.body.offsetWidth;document.body.classList.add("shake");
+  setTimeout(()=>d.remove(),2200);
+}
+function fxChamp(name){
+  const d=document.createElement("div");d.className="fx champfx";d.innerHTML=`<i>🏆</i><b>${esc(name)}</b><span>優勝！</span>`;document.body.appendChild(d);
+  const cols=["#ffcf3f","#fff7ec","#1a1412","#ff8a65","#7ed6a5","#7aa7ff"];
+  for(let k=0;k<90;k++){const c=document.createElement("i");c.className="conf";c.style.cssText=`left:${Math.random()*100}vw;background:${cols[k%cols.length]};animation-delay:${Math.random()*1.2}s;animation-duration:${2.4+Math.random()*1.8}s;transform:rotate(${Math.random()*360}deg)`;document.body.appendChild(c);setTimeout(()=>c.remove(),5200)}
+  setTimeout(()=>d.remove(),4200);
+}
 function handle(m,time){
   if(!m||typeof m.id!=="string")return;
   const p=players.get(m.id)||{name:"",first:time,last:0};
   if(!p.first)p.first=time;
+  if(m.t==="act"||m.t==="vote")lastEvt=Math.max(lastEvt,time);
   p.name=String(m.name||"").slice(0,12);p.last=Math.max(p.last,time);if(m.role)p.role=String(m.role);players.set(m.id,p);
   const r=Number(m.r)||1;
   if(m.t==="chat")addmsg(p.name,String(m.text||"").slice(0,200),m.id===myId);
@@ -532,6 +563,7 @@ function render(){
   h+=cupTag;
   if(both){
     h+=`<div class="potrow"><div class="pot"><span class="chips"><span class="chip" style="top:6px"></span><span class="chip" style="top:2px"></span><span class="chip" style="top:-2px"></span></span>${B.pot}</div></div>`;
+    B.log.forEach(([i,t],k)=>{const key="a"+R+":"+k;if(/オールイン/.test(t)&&!fxDone.has(key)){fxDone.add(key);if(fresh())fxAllin(nm(i))}});
     if(B.log.length&&!big)h+=`<div class="log">${B.log.slice(-3).map(([i,t])=>nm(i)+"："+t).join("　→　")}</div>`;
   }
   let dock="";
@@ -572,7 +604,7 @@ function render(){
     const show=Z&&Z.fold?ro:B.alive,ord=blindOrder(show);
     if(Z)h+=`<div class="banner"><b>${nm(Z.w)} の勝ち <em>+${Z.gain}</em></b><span>${Z.how}</span></div>`;
     h+=`<div class="cards ${ord.length>2?"multi":"duo"}">`+ord.map((i,k)=>{const lab=LAB[k];
-      return `<div class="cw"><div class="tag">${blind?"記事 "+lab:lab+"："+nm(i)+(i===myId?"（あなた）":"")+"　"+(x.draws[i]||"?")+"回目"+(B.folded.has(i)?"（フォールド）":"")}</div>${card(x.picks[i],{win:Z&&Z.w===i})}</div>`}).join("")+`</div>`;
+      return `<div class="cw"><div class="tag">${blind?"記事 "+lab:lab+"："+nm(i)+(i===myId?"（あなた）":"")+"　"+(x.draws[i]||"?")+"回目"+(B.folded.has(i)?"（フォールド）":"")}</div><div class="flipbox" style="--d:${(k*0.6).toFixed(1)}s"><div class="fback"></div>${card(x.picks[i],{win:Z&&Z.w===i})}</div></div>`}).join("")+`</div>`;
     if(!Z){
       if(aiOn&&J===AI_ID)aiJudge(ord,x.picks);
       if(J&&J.startsWith("ai-"))dock=`<div class="msg">AI審判が記事を読んでいます…</div>`;
@@ -582,6 +614,7 @@ function render(){
       const after={};Object.keys(H.raw).forEach(i=>after[i]=H.raw[i]);ro.forEach(i=>after[i]=left(i));
       const ks=Object.keys(after),alive=ks.filter(i=>after[i]>0),out=ro.filter(i=>left(i)<=0);
       if(ks.length>=2&&alive.length===1){
+        if(!fxDone.has("c"+R)){fxDone.add("c"+R);if(fresh())setTimeout(()=>fxChamp((players.get(alive[0])||{}).name||""),ro.length*600)}
         h=h.replace('<div class="cards','<div class="champ"><b>🏆 '+nm(alive[0])+' 優勝！</b><span>第'+H.cup+'大会　'+((H.champs[alive[0]]||0)+1)+'回目の優勝</span></div><div class="cards');
         dock=`<button class="big pri" id="nx">次の大会を始める（全員${START}枚）</button>`;
       }else dock=(out.length?`<div class="msg">${out.map(nm).join("・")} さんが脱落しました</div>`:"")+`<button class="big pri" id="nx">もう一局</button>`;
