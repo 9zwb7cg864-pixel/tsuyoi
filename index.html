@@ -173,7 +173,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-21d"; // 新しい版を出したら変える
+const VER="2026-11-21e"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -186,7 +186,9 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 let myId=store.get("tsy-id"); // 端末に保存して、閉じても同じ人として入り直せるようにする
 if(!myId){myId=Math.random().toString(36).slice(2,10);store.set("tsy-id",myId)}
-if(location.hash==="#owner"){const t=prompt("AI審判の合言葉を入れてください");if(t)store.set("tsy-owner",t.trim());history.replaceState(null,"",location.pathname+location.search)}
+function ownerSetup(){const t=prompt("AI審判の合言葉を入れてください（消すときは空のままOK）");if(t===null)return;store.set("tsy-owner",t.trim());toast(t.trim()?"合言葉を保存しました。部屋に入り直すとAI審判ボタンが出ます":"合言葉を消しました")}
+if(location.hash==="#owner"){ownerSetup();history.replaceState(null,"",location.pathname+location.search)}
+{let n=0,tm=null;document.addEventListener("click",e=>{if(!e.target.closest(".logo"))return;n++;clearTimeout(tm);tm=setTimeout(()=>n=0,1500);if(n>=5){n=0;ownerSetup()}})} // ホーム画面のアプリでは、左上の名前を5回タップで合言葉を入れる
 let aiOn=false,aiRunning=null,aiBeat=null; // AI審判（持ち主の端末だけ。合言葉は端末に保存）
 const AI_ID="ai-"+myId; // AI審判は、持ち主の端末が代わりに動かす別の参加者
 const JUDGE_URL="https://orange-bar-fd12.9zwb7cg864.workers.dev/";
