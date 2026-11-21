@@ -93,17 +93,60 @@ input::placeholder{color:#a99d93}
 .fback{position:absolute;inset:0;border-radius:16px;border:3px solid var(--ink);background:repeating-linear-gradient(45deg,#1a1412 0 10px,#2b211d 10px 20px);transform:rotateY(180deg);backface-visibility:hidden}
 .cards.multi .fback{border-radius:12px;border-width:2px}
 @keyframes flip{from{transform:perspective(900px) rotateY(180deg)}to{transform:perspective(900px) rotateY(0)}}
-.fx{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;background:rgba(26,20,18,.62);animation:dim 2.2s ease-out both}
-.fx>*{animation:pop 2.2s ease-out both}
-@keyframes dim{0%{opacity:0}10%{opacity:1}80%{opacity:1}100%{opacity:0}}
-.fx b{display:block;font:400 clamp(44px,13vw,84px)/1 var(--fn);color:var(--gold);-webkit-text-stroke:2px var(--ink);text-shadow:0 6px 0 var(--ink);white-space:nowrap}
-.fx span{display:inline-block;margin-top:8px;font-weight:900;font-size:16px;color:var(--ink);background:var(--pn);border:2px solid var(--ink);border-radius:999px;padding:4px 14px}
-.champfx,.champfx>*{animation-duration:4.2s}.champfx i{display:block;font-style:normal;font-size:84px;line-height:1}
-@keyframes pop{0%{opacity:0;transform:scale(.3)}12%{opacity:1;transform:scale(1.12)}20%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-20px)}}
-.shake{animation:shake .5s}
-@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-8px)}40%,60%{transform:translateX(8px)}}
-.conf{position:fixed;top:-20px;width:9px;height:14px;z-index:299;pointer-events:none;border-radius:2px;animation:fall linear both}
-@keyframes fall{to{top:105vh;transform:rotate(720deg) translateX(40px)}}
+.fxcv{position:fixed;inset:0;width:100%;height:100%;z-index:320;pointer-events:none}
+.thud{animation:thud .4s cubic-bezier(.2,.8,.3,1)}
+@keyframes thud{0%{transform:none}18%{transform:translate(-5px,9px) scale(.985)}40%{transform:translate(4px,-4px)}62%{transform:translate(-2px,2px)}100%{transform:none}}
+.ai2{position:fixed;inset:0;z-index:300;pointer-events:none;display:grid;place-items:center;overflow:hidden}
+.ai2dim{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(18,13,11,.45),rgba(18,13,11,.9));animation:ai2dim 2.6s ease both}
+.ai2flash{position:absolute;inset:0;background:#fff7ec;opacity:0;animation:ai2flash 2.6s linear both}
+@keyframes ai2dim{0%{opacity:0}5%{opacity:1}86%{opacity:1}100%{opacity:0}}
+@keyframes ai2flash{0%{opacity:.95}5%{opacity:0}29%{opacity:0}30.5%{opacity:.8}37%{opacity:0}100%{opacity:0}}
+.ai2band{position:absolute;left:-25vw;top:50%;width:150vw;padding:16px 0 20px;transform:translateY(-50%) rotate(-6deg);background:linear-gradient(180deg,#3a2114,#120d0b 38%,#120d0b 62%,#3a2114);border-top:5px solid var(--gold);border-bottom:5px solid var(--gold);box-shadow:0 0 0 3px #120d0b,0 0 0 5px rgba(255,207,63,.45),0 24px 60px rgba(0,0,0,.6);clip-path:inset(-90px 100% -90px 0);animation:ai2in .22s cubic-bezier(.2,.9,.2,1) .05s forwards}
+.ai2.out .ai2band{animation:ai2out .3s cubic-bezier(.6,0,.9,.3) forwards}
+@keyframes ai2in{to{clip-path:inset(-90px 0 -90px 0)}}
+@keyframes ai2out{from{clip-path:inset(-90px 0 -90px 0)}to{clip-path:inset(-90px 0 -90px 100%)}}
+.ai2lines{position:absolute;inset:0;background:
+ linear-gradient(90deg,transparent,rgba(255,207,63,.55),transparent) 0 10%/180px 2px repeat-x,
+ linear-gradient(90deg,transparent,rgba(255,247,236,.35),transparent) 60px 28%/300px 1px repeat-x,
+ linear-gradient(90deg,transparent,rgba(255,207,63,.4),transparent) 120px 50%/240px 2px repeat-x,
+ linear-gradient(90deg,transparent,rgba(255,247,236,.3),transparent) 30px 72%/360px 1px repeat-x,
+ linear-gradient(90deg,transparent,rgba(255,207,63,.55),transparent) 90px 90%/200px 2px repeat-x;
+ animation:ai2lines .45s linear infinite}
+@keyframes ai2lines{to{background-position:-720px 10%,-840px 28%,-840px 50%,-1050px 72%,-710px 90%}}
+.ai2in{position:relative;width:100vw;margin:0 auto;display:flex;flex-direction:column;align-items:center}
+.ai2name{max-width:88vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:900 clamp(15px,4.4vw,22px)/1.3 var(--f);color:#fff7ec;letter-spacing:.1em;opacity:0;animation:fxup .3s ease-out .2s forwards}
+.ai2name::before,.ai2name::after{content:"";display:inline-block;width:24px;height:2px;background:var(--gold);vertical-align:middle;margin:0 10px}
+.ai2word{display:flex;transform:skewX(-9deg);filter:drop-shadow(0 6px 0 #5a3000) drop-shadow(0 0 22px rgba(255,180,40,.55))}
+.ai2word span,.ch2word span{background:linear-gradient(180deg,#fffbe0 0%,#ffe27a 28%,#ffcf3f 52%,#f39a00 82%,#c96f00 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;opacity:0;animation:fxstamp .36s cubic-bezier(.2,1.5,.3,1) forwards}
+.ai2word span{font:400 clamp(52px,17.5vw,118px)/1.08 var(--fn);animation-delay:calc(.24s + var(--i)*.085s)}
+@keyframes fxstamp{0%{opacity:0;transform:scale(3.6) rotate(-10deg)}55%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes fxup{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.ai2amt{display:flex;align-items:center;gap:8px;margin-top:2px;font:400 clamp(24px,7.4vw,38px)/1.1 var(--fn);color:#fff7ec;opacity:0;animation:fxup .25s ease-out .8s forwards}
+.ai2amt .chip{width:22px;height:22px;flex:none}.ai2amt em{font:900 14px var(--f);font-style:normal;color:var(--gold);align-self:flex-end;padding-bottom:4px}
+.ch2{position:fixed;inset:0;z-index:310;display:grid;place-items:center;overflow:hidden;cursor:pointer;background:radial-gradient(circle at 50% 40%,#8a2114 0,#3a120c 48%,#120807 100%);animation:ch2bg .4s ease both}
+.ch2.out{animation:ch2out .45s ease forwards}
+@keyframes ch2bg{from{opacity:0}}@keyframes ch2out{to{opacity:0}}
+.ch2rays{position:absolute;left:50%;top:40%;width:220vmax;height:220vmax;margin:-110vmax 0 0 -110vmax;background:repeating-conic-gradient(rgba(255,207,63,.22) 0 7deg,transparent 7deg 18deg);-webkit-mask:radial-gradient(circle,#000 0,rgba(0,0,0,.55) 22%,transparent 52%);mask:radial-gradient(circle,#000 0,rgba(0,0,0,.55) 22%,transparent 52%);animation:ch2spin 44s linear infinite}
+@keyframes ch2spin{to{transform:rotate(360deg)}}
+.ch2glow{position:absolute;left:50%;top:40%;width:96vmin;height:96vmin;margin:-48vmin 0 0 -48vmin;border-radius:50%;background:radial-gradient(circle,rgba(255,225,130,.6),rgba(255,207,63,.14) 45%,transparent 70%);animation:ch2pulse 2.4s ease-in-out infinite}
+@keyframes ch2pulse{50%{transform:scale(1.14);opacity:.75}}
+.ch2in{position:relative;width:100%;padding:0 16px;display:flex;flex-direction:column;align-items:center;transform:translateY(-4vh)}
+.ch2cup{font:900 12.5px var(--f);letter-spacing:.32em;color:var(--gold);border:1.5px solid var(--gold);border-radius:999px;padding:4px 12px 4px 18px;opacity:0;animation:fxup .4s ease .2s forwards}
+.ch2tro{width:min(44vw,190px);height:auto;margin-top:10px;overflow:visible;filter:drop-shadow(0 12px 0 rgba(0,0,0,.35)) drop-shadow(0 0 30px rgba(255,200,60,.6));opacity:0;animation:ch2drop .7s cubic-bezier(.3,1.5,.4,1) .3s forwards,ch2float 3.2s ease-in-out 1.05s infinite}
+@keyframes ch2drop{0%{opacity:0;transform:translateY(-70vh) rotate(-16deg) scale(.7)}60%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes ch2float{50%{transform:translateY(-9px) rotate(1.6deg)}}
+.ch2shine{animation:ch2shine 2.6s ease-in-out 1.1s infinite}
+@keyframes ch2shine{0%{transform:translateX(-90px)}55%,100%{transform:translateX(300px)}}
+.ch2word{display:flex;gap:.04em;margin-top:-4px;filter:drop-shadow(0 8px 0 #5a3000) drop-shadow(0 0 28px rgba(255,190,50,.65))}
+.ch2word span{font:400 clamp(86px,28vw,176px)/1.02 var(--fn);animation-duration:.42s;animation-delay:calc(.9s + var(--i)*.16s)}
+.ch2rib{position:relative;margin-top:10px;transform:scaleX(0);animation:ch2rib .5s cubic-bezier(.2,1.4,.3,1) 1.35s forwards}
+@keyframes ch2rib{to{transform:scaleX(1)}}
+.ch2rib b{display:block;position:relative;max-width:80vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--pn);color:var(--ink);font:400 clamp(20px,6.4vw,30px)/1.25 var(--fn);padding:9px 26px;border:3px solid var(--ink);box-shadow:0 6px 0 rgba(0,0,0,.4)}
+.ch2rib::before,.ch2rib::after{content:"";position:absolute;top:10px;bottom:-10px;width:30px;background:#d9c9a8;border:3px solid var(--ink);z-index:-1}
+.ch2rib::before{left:-20px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,38% 50%)}
+.ch2rib::after{right:-20px;clip-path:polygon(0 0,100% 0,62% 50%,100% 100%,0 100%)}
+.ch2sub{margin-top:18px;font:700 14px var(--f);color:#ffe9b0;letter-spacing:.06em;opacity:0;animation:fxup .4s ease 1.75s forwards}
+.ch2tap{position:absolute;left:0;right:0;bottom:max(24px,env(safe-area-inset-bottom));text-align:center;font:700 12px var(--f);color:rgba(255,247,236,.55);opacity:0;animation:fxup .4s ease 2.6s forwards}
 .pickn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .cw{display:flex;flex-direction:column;gap:6px;min-height:0}
 .tag{flex:none;font-size:12px;font-weight:700;color:var(--on);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -202,7 +245,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22c"; // 新しい版を出したら変える
+const VER="2026-11-22e"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -328,8 +371,8 @@ function addCpu(){if(seats().length>=MAXP){toast("席がいっぱいです（6�
 function clearCpus(){cpus.forEach(c=>sendCpu(c,{t:"leave",r:R}));cpus=[];cpuSave();cpuBeatOn();render()}
 function ownerSheet(){
   const d=document.createElement("div");d.className="sheet";
-  d.innerHTML=`<div class="sheetin"><b>管理（オーナーだけ）</b><button class="big pri" data-k="ai">${aiOn?"AI審判を外す":"AI審判を入れる"}</button><button class="big sec" data-k="cpu">CPUを1人入れる</button>${cpus.length?`<button class="big sec" data-k="clr">CPUを全員外す（${cpus.length}人）</button>`:""}<button class="big ghost" data-k="x">閉じる</button></div>`;
-  d.onclick=e=>{const b=e.target.closest("button");if(!b&&e.target!==d)return;const k=b&&b.dataset.k;if(k==="ai")setAi(!aiOn);else if(k==="cpu")addCpu();else if(k==="clr")clearCpus();d.remove()};
+  d.innerHTML=`<div class="sheetin"><b>管理（オーナーだけ）</b><button class="big pri" data-k="ai">${aiOn?"AI審判を外す":"AI審判を入れる"}</button><button class="big sec" data-k="cpu">CPUを1人入れる</button>${cpus.length?`<button class="big sec" data-k="clr">CPUを全員外す（${cpus.length}人）</button>`:""}<div class="two"><button class="big ghost" data-k="t1">演出：オールイン</button><button class="big ghost" data-k="t2">演出：優勝</button></div><button class="big ghost" data-k="x">閉じる</button></div>`;
+  d.onclick=e=>{const b=e.target.closest("button");if(!b&&e.target!==d)return;const k=b&&b.dataset.k;if(k==="ai")setAi(!aiOn);else if(k==="cpu")addCpu();else if(k==="clr")clearCpus();else if(k==="t1")fxAllin(me,1000);else if(k==="t2")fxChamp(me,1,1);d.remove()};
   document.body.appendChild(d);
 }
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -391,16 +434,60 @@ function hello(){send({t:"hello",r:R,draws:local.r===R?local.draws:0})}
 // ---- 演出（オールイン・優勝）。今起きたことだけ（入り直しで昔の出来事を再生しない） ----
 let lastEvt=0;const fxDone=new Set();
 const fresh=()=>Date.now()/1000-lastEvt<12;
-function fxAllin(name){
-  const d=document.createElement("div");d.className="fx";d.innerHTML=`<b>オールイン！</b><span>${esc(name)}</span>`;document.body.appendChild(d);
-  document.body.classList.remove("shake");void document.body.offsetWidth;document.body.classList.add("shake");
-  setTimeout(()=>d.remove(),2200);
+// 粒（チップ・紙吹雪・きらめき）は1枚のキャンバスに描く
+const FX={cv:null,ctx:null,ps:[],raf:0,last:0};
+function fxAdd(p){
+  if(!FX.cv){const c=document.createElement("canvas");c.className="fxcv";document.body.appendChild(c);FX.cv=c;FX.ctx=c.getContext("2d");
+    const fit=()=>{const d=Math.min(devicePixelRatio||1,2);c.width=innerWidth*d;c.height=innerHeight*d;FX.ctx.setTransform(d,0,0,d,0,0)};fit();addEventListener("resize",fit)}
+  FX.ps.push(Object.assign({age:0,rot:Math.random()*6.283,vr:(Math.random()-.5)*9,flip:Math.random()*6.283,vf:6+Math.random()*9,g:900,drag:0,sw:0,ph:Math.random()*6.283,life:4,vx:0,vy:0},p));
+  if(!FX.raf){FX.last=performance.now();FX.raf=requestAnimationFrame(fxStep)}
 }
-function fxChamp(name){
-  const d=document.createElement("div");d.className="fx champfx";d.innerHTML=`<i>🏆</i><b>${esc(name)}</b><span>優勝！</span>`;document.body.appendChild(d);
-  const cols=["#ffcf3f","#fff7ec","#1a1412","#ff8a65","#7ed6a5","#7aa7ff"];
-  for(let k=0;k<90;k++){const c=document.createElement("i");c.className="conf";c.style.cssText=`left:${Math.random()*100}vw;background:${cols[k%cols.length]};animation-delay:${Math.random()*1.2}s;animation-duration:${2.4+Math.random()*1.8}s;transform:rotate(${Math.random()*360}deg)`;document.body.appendChild(c);setTimeout(()=>c.remove(),5200)}
-  setTimeout(()=>d.remove(),4200);
+function fxStep(t){
+  const dt=Math.min(.034,(t-FX.last)/1000);FX.last=t;const c=FX.ctx,W=innerWidth,H=innerHeight;c.clearRect(0,0,W,H);
+  FX.ps=FX.ps.filter(p=>{
+    p.age+=dt;p.vy+=p.g*dt;const k=Math.exp(-p.drag*dt);p.vx*=k;p.vy*=k;
+    p.x+=(p.vx+Math.sin(p.age*5+p.ph)*p.sw)*dt;p.y+=p.vy*dt;p.rot+=p.vr*dt;p.flip+=p.vf*dt;
+    if(p.age>p.life||p.y>H+60)return false;
+    c.save();c.globalAlpha=Math.max(0,Math.min(1,(p.life-p.age)/.35));c.translate(p.x,p.y);c.rotate(p.rot);
+    if(p.k==="chip"){const r=p.s;c.scale(1,.3+.7*Math.abs(Math.cos(p.flip)));
+      c.beginPath();c.arc(0,0,r,0,6.283);c.fillStyle="#1a1412";c.fill();c.beginPath();c.arc(0,0,r-1.6,0,6.283);c.fillStyle=p.col;c.fill();
+      c.fillStyle="#fff7ec";for(let q=0;q<6;q++){c.rotate(1.0472);c.fillRect(-r*.15,-r+1.6,r*.3,r*.3)}
+      c.beginPath();c.arc(0,0,r*.52,0,6.283);c.strokeStyle="rgba(26,20,18,.5)";c.lineWidth=1.2;c.stroke()}
+    else if(p.k==="spark"){const z=p.s*Math.sin(Math.PI*p.age/p.life);c.globalAlpha=1;c.fillStyle=p.col;c.beginPath();
+      for(let q=0;q<8;q++){const r=q%2?z*.2:z,a=q*Math.PI/4;c.lineTo(Math.cos(a)*r,Math.sin(a)*r)}c.closePath();c.fill()}
+    else{c.scale(1,Math.cos(p.flip));c.fillStyle=p.col;c.fillRect(-p.s/2,-p.s*.7,p.s,p.s*1.4)}
+    c.restore();return true});
+  if(FX.ps.length)FX.raf=requestAnimationFrame(fxStep);else{FX.raf=0;c.clearRect(0,0,W,H)}
+}
+function fxThud(){const g=$("game");g.classList.remove("thud");void g.offsetWidth;g.classList.add("thud")}
+function fxAllin(name,amt){ // 閃光 → 斜めの帯が切り込む → 金文字を1文字ずつ叩きつける → 衝撃とチップ
+  document.querySelectorAll(".ai2").forEach(e=>e.remove());
+  const d=document.createElement("div");d.className="ai2";
+  d.innerHTML=`<div class="ai2dim"></div><div class="ai2band"><div class="ai2lines"></div><div class="ai2in"><div class="ai2name">${esc(name)}</div><div class="ai2word">${[..."オールイン"].map((ch,i)=>`<span style="--i:${i}">${ch}</span>`).join("")}</div>${amt>0?`<div class="ai2amt"><i class="chip"></i><b>0</b><em>枚 ぜんぶ</em></div>`:""}</div></div><div class="ai2flash"></div>`;
+  document.body.appendChild(d);
+  const W=innerWidth,H=innerHeight,cols=["#ffcf3f","#ffcf3f","#ffcf3f","#fbf5e8","#d7372b"];
+  setTimeout(()=>{fxThud();
+    for(let k=0;k<54;k++){const a=Math.random()*6.283,v=260+Math.random()*760;
+      fxAdd({k:"chip",x:W/2+(Math.random()-.5)*W*.55,y:H/2+(Math.random()-.5)*50,vx:Math.cos(a)*v,vy:Math.sin(a)*v-280,g:1750,drag:.8,s:6.5+Math.random()*6.5,col:cols[k%cols.length],life:1.9,vf:8+Math.random()*12})}
+    const b=d.querySelector(".ai2amt b");if(b){const t0=performance.now(),tick=t=>{const q=Math.min(1,(t-t0)/520);b.textContent=Math.round(amt*(1-Math.pow(1-q,3)));if(q<1&&b.isConnected)requestAnimationFrame(tick)};requestAnimationFrame(tick)}
+  },790);
+  setTimeout(()=>d.classList.add("out"),2150);setTimeout(()=>d.remove(),2600);
+}
+function fxChamp(name,cup,times){ // 光の筋の舞台にトロフィーが落ちてきて、「優勝」と名前のリボン、紙吹雪
+  document.querySelectorAll(".ch2").forEach(e=>e.remove());
+  const d=document.createElement("div");d.className="ch2";
+  d.innerHTML=`<div class="ch2rays"></div><div class="ch2glow"></div><div class="ch2in">${cup?`<div class="ch2cup">第${cup}大会</div>`:""}<svg class="ch2tro" viewBox="0 0 200 204" aria-hidden="true"><defs><linearGradient id="tg1" x1="0" x2="1"><stop offset="0" stop-color="#b86e00"/><stop offset=".22" stop-color="#ffcf3f"/><stop offset=".42" stop-color="#fff6c2"/><stop offset=".62" stop-color="#ffcf3f"/><stop offset="1" stop-color="#b86e00"/></linearGradient><linearGradient id="tg2" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff6c2"/><stop offset=".5" stop-color="#ffcf3f"/><stop offset="1" stop-color="#c47a00"/></linearGradient><clipPath id="tc"><path d="M44 22H156C156 90 136 124 100 128C64 124 44 90 44 22Z"/><rect x="38" y="12" width="124" height="16" rx="8"/><path d="M90 124H110L115 158H85Z"/><rect x="62" y="154" width="76" height="18" rx="6"/><rect x="46" y="170" width="108" height="26" rx="8"/></clipPath></defs><g fill="none" stroke-linecap="round"><path d="M50 40C6 38 8 100 62 106" stroke="#1a1412" stroke-width="19"/><path d="M150 40C194 38 192 100 138 106" stroke="#1a1412" stroke-width="19"/><path d="M50 40C6 38 8 100 62 106" stroke="url(#tg2)" stroke-width="11"/><path d="M150 40C194 38 192 100 138 106" stroke="url(#tg2)" stroke-width="11"/></g><g stroke="#1a1412" stroke-width="4" stroke-linejoin="round"><path d="M90 124H110L115 158H85Z" fill="url(#tg1)"/><path d="M44 22H156C156 90 136 124 100 128C64 124 44 90 44 22Z" fill="url(#tg1)"/><rect x="38" y="12" width="124" height="16" rx="8" fill="url(#tg2)"/><rect x="62" y="154" width="76" height="18" rx="6" fill="url(#tg1)"/><rect x="46" y="170" width="108" height="26" rx="8" fill="url(#tg1)"/><polygon points="100.0,45.0 105.1,59.0 120.0,59.5 108.2,68.7 112.3,83.0 100.0,74.6 87.7,83.0 91.8,68.7 80.0,59.5 94.9,59.0" fill="#fffbe0" stroke="#b86e00" stroke-width="3"/></g><g clip-path="url(#tc)"><rect class="ch2shine" x="-60" y="0" width="34" height="204" fill="#fff" opacity=".6" transform="skewX(-18)"/></g></svg><div class="ch2word"><span style="--i:0">優</span><span style="--i:1">勝</span></div><div class="ch2rib"><b>${esc(name)}</b></div>${times?`<div class="ch2sub">${times>1?"通算 "+times+"回目の優勝":"はじめての優勝"}</div>`:""}</div><div class="ch2tap">タップで閉じる</div>`;
+  document.body.appendChild(d);
+  const W=innerWidth,H=innerHeight,cols=["#ffcf3f","#fff7ec","#ff8a65","#7ed6a5","#7aa7ff","#ffcf3f","#f48fb1"],T=[];
+  const shot=(x,ang,n,sp)=>{for(let k=0;k<n;k++){const a=ang+(Math.random()-.5)*.8,v=sp*(.4+Math.random()*.8);
+    fxAdd({k:"conf",x,y:H*.94,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:520,drag:1.5,sw:70,s:6+Math.random()*7,col:cols[k%cols.length],life:5+Math.random()*2.5})}};
+  const spark=()=>fxAdd({k:"spark",x:W/2+(Math.random()-.5)*W*.8,y:H*.4+(Math.random()-.5)*H*.5,g:0,vr:1.2,s:9+Math.random()*15,col:Math.random()<.5?"#fffbe0":"#ffe27a",life:.6+Math.random()*.6});
+  T.push(setTimeout(()=>{fxThud();shot(0,-1.05,95,1650);shot(W,-2.09,95,1650);for(let k=0;k<10;k++)spark()},900));
+  T.push(setTimeout(()=>{shot(0,-1.2,55,1450);shot(W,-1.94,55,1450)},2300));
+  const rain=setInterval(()=>{for(let k=0;k<4;k++)fxAdd({k:"conf",x:Math.random()*W,y:-20,vx:(Math.random()-.5)*70,vy:70+Math.random()*130,g:170,drag:.9,sw:95,s:6+Math.random()*7,col:cols[(Math.random()*cols.length)|0],life:8})},120);
+  const twinkle=setInterval(spark,230);
+  let closed=false;const close=()=>{if(closed)return;closed=true;T.forEach(clearTimeout);clearInterval(rain);clearInterval(twinkle);d.classList.add("out");setTimeout(()=>d.remove(),450)};
+  T.push(setTimeout(()=>{d.onclick=close},1000));setTimeout(close,7500);
 }
 function handle(m,time){
   if(!m||typeof m.id!=="string")return;
@@ -563,7 +650,7 @@ function render(){
   h+=cupTag;
   if(both){
     h+=`<div class="potrow"><div class="pot"><span class="chips"><span class="chip" style="top:6px"></span><span class="chip" style="top:2px"></span><span class="chip" style="top:-2px"></span></span>${B.pot}</div></div>`;
-    B.log.forEach(([i,t],k)=>{const key="a"+R+":"+k;if(/オールイン/.test(t)&&!fxDone.has(key)){fxDone.add(key);if(fresh())fxAllin(nm(i))}});
+    B.log.forEach(([i,t],k)=>{const key="a"+R+":"+k;if(/オールイン/.test(t)&&!fxDone.has(key)){fxDone.add(key);if(fresh())fxAllin((players.get(i)||{}).name||"",st[i])}});
     if(B.log.length&&!big)h+=`<div class="log">${B.log.slice(-3).map(([i,t])=>nm(i)+"："+t).join("　→　")}</div>`;
   }
   let dock="";
@@ -614,7 +701,7 @@ function render(){
       const after={};Object.keys(H.raw).forEach(i=>after[i]=H.raw[i]);ro.forEach(i=>after[i]=left(i));
       const ks=Object.keys(after),alive=ks.filter(i=>after[i]>0),out=ro.filter(i=>left(i)<=0);
       if(ks.length>=2&&alive.length===1){
-        if(!fxDone.has("c"+R)){fxDone.add("c"+R);if(fresh())setTimeout(()=>fxChamp((players.get(alive[0])||{}).name||""),ro.length*600)}
+        if(!fxDone.has("c"+R)){fxDone.add("c"+R);if(fresh())setTimeout(()=>fxChamp((players.get(alive[0])||{}).name||"",H.cup,(H.champs[alive[0]]||0)+1),ro.length*600)}
         h=h.replace('<div class="cards','<div class="champ"><b>🏆 '+nm(alive[0])+' 優勝！</b><span>第'+H.cup+'大会　'+((H.champs[alive[0]]||0)+1)+'回目の優勝</span></div><div class="cards');
         dock=`<button class="big pri" id="nx">次の大会を始める（全員${START}枚）</button>`;
       }else dock=(out.length?`<div class="msg">${out.map(nm).join("・")} さんが脱落しました</div>`:"")+`<button class="big pri" id="nx">もう一局</button>`;
