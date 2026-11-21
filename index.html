@@ -96,13 +96,16 @@ input::placeholder{color:#a99d93}
 .icbtn.off{opacity:.45;text-decoration:line-through}
 @media(max-width:420px){.ingame .logo b{font-size:13px}.ingame .top{gap:5px;padding-left:10px;padding-right:10px}.ingame #topr{gap:4px!important}.ingame .icbtn{padding:0 7px;min-width:30px}}
 .sheetin{max-height:88dvh;overflow-y:auto}
-.peek .stp{flex:none;font-style:normal;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;border:1.5px solid var(--gold);color:var(--gold)}
-.stamps{flex:none;display:flex;gap:6px;overflow-x:auto;padding:6px 10px;scrollbar-width:none}.stamps::-webkit-scrollbar{display:none}
-.stamps button{flex:none;font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:999px;background:var(--pn);border:1.5px solid var(--line);color:var(--ink);white-space:nowrap}
-.stgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stgrid .big{min-height:46px;font-size:14px}
-.stampfx{position:fixed;top:17%;z-index:250;pointer-events:none;display:flex;flex-direction:column;align-items:flex-start;gap:3px;animation:stampfx 2.6s ease-out both}
-.stampfx b{font:400 clamp(20px,6vw,28px)/1.2 var(--fn);background:var(--pn);color:var(--ink);border:3px solid var(--ink);border-radius:18px 18px 18px 4px;padding:8px 14px;box-shadow:0 5px 0 rgba(0,0,0,.3);white-space:nowrap}
-.stampfx span{font-size:11.5px;font-weight:700;color:var(--ink);background:var(--gold);border-radius:999px;padding:2px 9px;margin-left:4px}
+.cuprow{flex:none;display:flex;align-items:center;justify-content:center;gap:10px}
+.stb{flex:none;min-height:28px;padding:0 12px;border-radius:999px;background:var(--pn);color:var(--ink);border:2px solid var(--ink);font-size:12px;font-weight:900;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.stgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.stpick{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:14px;background:#fff;border:2px solid var(--line);color:var(--ink)}
+.stpick img{width:100%;max-width:74px;aspect-ratio:1;object-fit:contain}.stpick span{font-size:11px;font-weight:900;white-space:nowrap}
+.stampfx{position:fixed;top:15%;z-index:250;pointer-events:none;display:flex;flex-direction:column;align-items:flex-start;gap:3px;animation:stampfx 2.6s ease-out both}
+.stbub{display:flex;flex-direction:column;align-items:center;background:var(--pn);border:3px solid var(--ink);border-radius:22px 22px 22px 6px;padding:8px 14px 10px;box-shadow:0 5px 0 rgba(0,0,0,.3)}
+.stbub img{width:clamp(96px,30vw,140px);aspect-ratio:1;object-fit:contain}
+.stbub b{font:400 clamp(20px,6vw,28px)/1.2 var(--fn);color:var(--ink);white-space:nowrap}
+.stampfx>span{font-size:11.5px;font-weight:700;color:var(--ink);background:var(--gold);border-radius:999px;padding:2px 9px;margin-left:4px}
 @keyframes stampfx{0%{opacity:0;transform:translateY(24px) scale(.5) rotate(-8deg)}10%{opacity:1;transform:scale(1.12) rotate(3deg)}18%{transform:none}80%{opacity:1;transform:translateY(-14px)}100%{opacity:0;transform:translateY(-40px)}}
 .fxcv{position:fixed;inset:0;width:100%;height:100%;z-index:320;pointer-events:none}
 .thud{animation:thud .4s cubic-bezier(.2,.8,.3,1)}
@@ -195,6 +198,14 @@ input[type=range]::-moz-range-track{height:8px;border-radius:9px;background:var(
 input[type=range]::-moz-range-progress{height:8px;border-radius:9px;background:var(--bg)}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;margin-top:-9px;border:3px solid var(--ink)}
 input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--ink)}
+.amth{align-items:center!important;gap:14px}.amth b{flex:1;text-align:right;font-size:30px!important;line-height:1}.amth b.bump{animation:bump .18s ease-out}
+@keyframes bump{from{transform:scale(1.25)}}
+.clr{flex:none;min-height:30px;padding:0 12px;border-radius:999px;background:transparent;border:2px solid var(--line);color:var(--sub);font-size:12px;font-weight:700}
+.chipsrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;justify-items:center;padding:2px 0 4px}
+.cbtn{--c:#fbf5e8;--t:#1a1412;width:min(100%,68px);aspect-ratio:1;border-radius:50%;border:3px solid var(--ink);background:radial-gradient(circle,var(--c) 0 52%,transparent 53%),repeating-conic-gradient(var(--c) 0 30deg,#fff7ec 30deg 60deg);box-shadow:0 5px 0 var(--ink);display:grid;place-items:center;transition:transform .06s,box-shadow .06s}
+.cbtn span{font:400 13px var(--fn);white-space:nowrap;color:var(--t);width:70%;aspect-ratio:1;display:grid;place-items:center;border-radius:50%;border:2px dashed color-mix(in srgb,var(--t) 45%,transparent)}
+.cbtn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}.cbtn:disabled{opacity:.35}
+.cbtn.c50{--c:#d7372b;--t:#fff7ec}.cbtn.c100{--c:#ffcf3f}.cbtn.c500{--c:#1a1412;--t:#ffcf3f}
 .quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .quick button{min-height:36px;border-radius:999px;background:#fff;border:2px solid var(--line);color:var(--ink);font-size:12.5px;font-weight:700}
 .left{font-size:12.5px;color:var(--sub);text-align:center}.left b{font:400 16px var(--fn);color:var(--ink)}
@@ -246,18 +257,17 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   </div>
 
   <div class="table hide" id="game"></div>
-  <button class="peek hide" id="peek" aria-label="チャットを開く"><span id="pk">チャットはここ。タップで開く</span><i class="stp">スタンプ</i><b>開く</b></button>
+  <button class="peek hide" id="peek" aria-label="チャットを開く"><span id="pk">チャットはここ。タップで開く</span><b>開く</b></button>
 </div>
 <aside class="chat hide" id="chat">
   <div class="chath"><div><b>チャット</b><br><span id="who"></span></div><button class="icbtn x" id="cx">閉じる</button></div>
   <div class="msgs" id="log"></div>
-  <div class="stamps" id="stamps"></div>
   <form class="cf" id="cf"><input id="ci" maxlength="200" placeholder="メッセージ" autocomplete="off"><button id="cs">送る</button></form>
 </aside>
 </div>
 <script>
 {
-const VER="2026-11-22g"; // 新しい版を出したら変える
+const VER="2026-11-22i"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -307,7 +317,7 @@ function enterRoom(rm,ord){
   if(ord)fixedOrder=ord;
   for(const i of fixedOrder)if(!players.has(i))players.set(i,{name:(want.get(i)||{}).name||"入室待ち",first:0,last:0});
   try{history.replaceState(null,"","?r="+room+(fixedOrder.length===3?"&o="+fixedOrder.join("."):""))}catch(e){}
-  $("home").classList.add("hide");$("game").classList.remove("hide");$("peek").classList.remove("hide");$("peek").onclick=e=>e.target.closest(".stp")?stampSheet():setChat(true);$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
+  $("home").classList.add("hide");$("game").classList.remove("hide");$("peek").classList.remove("hide");$("peek").onclick=()=>setChat(true);$("chat").classList.remove("hide");$("wrap").classList.add("ingame");
   $("topr").innerHTML=`<button class="icbtn" id="rl">${myRole==="judge"?"審判中":"対戦中"}</button>${store.get("tsy-owner")?`<button class="icbtn" id="ad">管理</button>`:""}<button class="icbtn${SND.on?"":" off"}" id="sd" aria-label="効果音">♪</button><button class="icbtn" id="cp">招待</button><button class="icbtn" id="lv">退室</button>`;
   $("rl").onclick=()=>setRole(myRole==="judge"?"player":"judge");
   $("lv").onclick=async()=>{ // 退室：みんなに知らせてトップに戻る（AI審判を入れていたら一緒に外す）
@@ -317,7 +327,6 @@ function enterRoom(rm,ord){
   };
   if($("ad"))$("ad").onclick=ownerSheet;
   $("sd").onclick=()=>{SND.on=!SND.on;store.set("tsy-snd",SND.on?"1":"0");$("sd").classList.toggle("off",!SND.on);toast(SND.on?"効果音：あり":"効果音：なし");if(SND.on)snd("bet")};
-  $("stamps").innerHTML=STAMPS.map((t,i)=>`<button type="button" data-s="${i}">${t}</button>`).join("");$("stamps").onclick=e=>{const b=e.target.closest("[data-s]");if(b)sendStamp(STAMPS[b.dataset.s])};
   if(store.get("tsy-owner")){try{cpus=JSON.parse(store.get("tsy-cpu-"+room)||"[]")}catch(e){cpus=[]}if(cpus.length)setTimeout(()=>{cpus.forEach(c=>sendCpu(c,{t:"hello",r:R}));cpuBeatOn()},1500)}
   if(store.get("tsy-owner")&&store.get("tsy-ai-"+room)==="1")setTimeout(()=>setAi(true),1500);
   $("cp").onclick=()=>{ // 招待：対戦者として／審判として、の2種類のリンク
@@ -458,14 +467,15 @@ function sndInit(){if(SND.ctx)return;try{SND.ctx=new (window.AudioContext||windo
   ["bet","call","raise","check","fold","flip","chips","allin","win","champ","turn","stamp"].forEach(n=>fetch("snd/"+n+".mp3?2").then(r=>r.arrayBuffer()).then(b=>new Promise((ok,ng)=>SND.ctx.decodeAudioData(b,ok,ng))).then(a=>{SND.buf[n]=a}).catch(()=>{}))}
 addEventListener("pointerdown",()=>{sndInit();if(SND.ctx&&SND.ctx.state==="suspended")SND.ctx.resume()},{passive:true});
 function snd(n,vol=1,delay=0){if(!SND.on||!SND.ctx||!SND.buf[n])return;try{const a=SND.ctx.createBufferSource(),g=SND.ctx.createGain();a.buffer=SND.buf[n];g.gain.value=vol;a.connect(g);g.connect(SND.ctx.destination);a.start(SND.ctx.currentTime+delay)}catch(e){}}
-// スタンプ
-const STAMPS=["💪 つよい！","😱 うそだろ","👏 ナイス！","🤥 ブラフでしょ","⏰ はやく〜","🔥 やばい","🙏 おねがい","🌱 草"];
+// スタンプ（チャットには残さず、全員の画面にポンと出す）
+const STAMPS=["つよい！","うそだろ","ナイス！","ブラフでしょ","はやく〜","やばい","おねがい","草"];
 let stampAt=0;
-function sendStamp(t){const n=Date.now();if(n-stampAt<1500)return;stampAt=n;send({t:"chat",r:R,text:t,st:1})}
-function showStamp(name,text){const d=document.createElement("div");d.className="stampfx";d.style.left=(6+Math.random()*40)+"%";d.innerHTML=`<b>${esc(text)}</b><span>${esc(name)}</span>`;document.body.appendChild(d);setTimeout(()=>d.remove(),2600);snd("stamp",.7)}
+const stImg=k=>`<img src="st/${k}.webp" alt="" onerror="this.remove()">`;
+function sendStamp(k){const n=Date.now();if(n-stampAt<1500)return;stampAt=n;send({t:"stamp",r:R,k})}
+function showStamp(name,k){if(!STAMPS[k])return;const d=document.createElement("div");d.className="stampfx";d.style.left=(6+Math.random()*34)+"%";d.innerHTML=`<div class="stbub">${stImg(k)}<b>${esc(STAMPS[k])}</b></div><span>${esc(name)}</span>`;document.body.appendChild(d);setTimeout(()=>d.remove(),2600);snd("stamp",.7)}
 function stampSheet(){const d=document.createElement("div");d.className="sheet";
-  d.innerHTML=`<div class="sheetin"><b>スタンプ</b><div class="stgrid">${STAMPS.map((t,i)=>`<button class="big sec" data-s="${i}">${t}</button>`).join("")}</div><button class="big ghost">閉じる</button></div>`;
-  d.onclick=e=>{const b=e.target.closest("button");if(!b&&e.target!==d)return;if(b&&b.dataset.s)sendStamp(STAMPS[b.dataset.s]);d.remove()};document.body.appendChild(d)}
+  d.innerHTML=`<div class="sheetin"><b>スタンプ</b><div class="stgrid">${STAMPS.map((t,i)=>`<button class="stpick" data-s="${i}">${stImg(i)}<span>${t}</span></button>`).join("")}</div><button class="big ghost">閉じる</button></div>`;
+  d.onclick=e=>{const b=e.target.closest("button");if(!b&&e.target!==d)return;if(b&&b.dataset.s)sendStamp(Number(b.dataset.s));d.remove()};document.body.appendChild(d)}
 // 粒（チップ・紙吹雪・きらめき）は1枚のキャンバスに描く
 const FX={cv:null,ctx:null,ps:[],raf:0,last:0};
 function fxAdd(p){
@@ -530,7 +540,8 @@ function handle(m,time){
   if(m.t==="act"&&Date.now()/1000-time<10)snd({fold:"fold",check:"check",call:"call",raise:"raise",allin:"raise"}[m.a]||"bet");
   p.name=String(m.name||"").slice(0,12);p.last=Math.max(p.last,time);if(m.role)p.role=String(m.role);players.set(m.id,p);
   const r=Number(m.r)||1;
-  if(m.t==="chat"){addmsg(p.name,String(m.text||"").slice(0,200),m.id===myId);if(m.st&&Date.now()/1000-time<10&&STAMPS.includes(m.text))showStamp(p.name,m.text)}
+  if(m.t==="chat")addmsg(p.name,String(m.text||"").slice(0,200),m.id===myId);
+  else if(m.t==="stamp"){if(Date.now()/1000-time<10)showStamp(p.name,Number(m.k))}
   else if(m.t==="hello"||m.t==="draw"){R_(r).draws[m.id]=Math.max(R_(r).draws[m.id]||0,Number(m.draws)||0)}
   else if(m.t==="pick"&&m.a&&typeof m.a.title==="string"){R_(r).picks[m.id]=m.a;R_(r).draws[m.id]=Number(m.draws)||MAXDRAW}
   else if(m.t==="vote"&&typeof m.for==="string"){R_(r).votes[m.id]=m.for}
@@ -662,7 +673,7 @@ function render(){
     return paint(g,h);
   }
   const H=history_(J),wins=H.wins,st=H.st;
-  const cupTag=`<div class="cup">第${H.cup}大会　残り${Object.keys(H.raw).length?Object.keys(H.raw).filter(i=>H.raw[i]>0).length:ro.length}人　参加料${anteOf[R]||ANTE}枚${anteUp[R]?"（アップ！）":""}</div>`;
+  const cupTag=`<div class="cuprow"><div class="cup">第${H.cup}大会　残り${Object.keys(H.raw).length?Object.keys(H.raw).filter(i=>H.raw[i]>0).length:ro.length}人　参加料${anteOf[R]||ANTE}枚${anteUp[R]?"（アップ！）":""}</div><button class="stb" id="stb">スタンプ</button></div>`;
   const both=allPicked(R),B=both?betState(R,ro,st):null;
   const Z=B&&B.done?outcome(R,ro,J,st):null;
   if(cpus.length)cpuTick(ro,x,both,B,st);
@@ -714,8 +725,8 @@ function render(){
         const p=maxA>minA?Math.round((local.amt-minA)/(maxA-minA)*100):100;
         const raiseLbl=need>0?"レイズ":"ベット",allin=local.amt>=maxA;
         dock=`<div class="msg">あなたの番です。ほかの人の記事は見えません</div>`;
-        if(canRaise)dock+=`<div class="amt"><div class="amth"><span class="lbl">${need>0?"上乗せする枚数":"賭ける枚数"}</span><b id="av">${local.amt}${allin?"（オールイン）":""}</b></div>
-          <input type="range" id="sl" min="${minA}" max="${maxA}" step="10" value="${local.amt}" style="--p:${p}%" aria-label="賭ける枚数">
+        if(canRaise)dock+=`<div class="amt"><div class="amth"><span class="lbl">${need>0?"上乗せする枚数":"賭ける枚数"}</span><b id="av">${local.amt}${allin?"（オールイン）":""}</b><button class="clr" id="clr">クリア</button></div>
+          <div class="chipsrow" id="cr" data-min="${minA}" data-max="${maxA}">${[10,50,100,500].map(v=>`<button class="cbtn c${v}" data-add="${v}" ${local.amt>=maxA?"disabled":""}><span>+${v}</span></button>`).join("")}</div>
           <div class="quick"><button data-q="${Math.floor(B.pot/2)}">½ポット</button><button data-q="${B.pot}">ポット</button><button data-q="${Math.floor(maxA/2)}">半分</button><button data-q="${maxA}">オールイン</button></div></div>`;
         dock+=`<div class="acts">${need>0?`<button class="big ghost" data-act="fold" ${wait?"disabled":""}>フォールド</button><button class="big sec" data-act="call" ${wait?"disabled":""}>コール<small>${need}</small></button>`:`<button class="big ghost" disabled>フォールド</button><button class="big sec" data-act="check" ${wait?"disabled":""}>チェック</button>`}<button class="big pri" id="ra" data-lbl="${raiseLbl}" data-act="${allin?"allin":"raise"}" ${canRaise?"":"disabled"}>${allin?"オールイン":raiseLbl}<small>${canRaise?(allin?maxA:"+"+local.amt):"—"}</small></button></div>`;
       }else dock=`<div class="msg">${B.to?nm(B.to)+" さんの番です":"待っています"}</div>`;
@@ -740,7 +751,7 @@ function render(){
       const ks=Object.keys(after),alive=ks.filter(i=>after[i]>0),out=ro.filter(i=>left(i)<=0);
       if(ks.length>=2&&alive.length===1){
         if(!fxDone.has("c"+R)){fxDone.add("c"+R);if(fresh())setTimeout(()=>fxChamp((players.get(alive[0])||{}).name||"",H.cup,(H.champs[alive[0]]||0)+1),ro.length*600)}
-        h=h.replace('<div class="cards','<div class="champ"><b>🏆 '+nm(alive[0])+' 優勝！</b><span>第'+H.cup+'大会　'+((H.champs[alive[0]]||0)+1)+'回目の優勝</span></div><div class="cards');
+        h=h.replace('<div class="cards','<div class="champ"><b>'+nm(alive[0])+' 優勝！</b><span>第'+H.cup+'大会　'+((H.champs[alive[0]]||0)+1)+'回目の優勝</span></div><div class="cards');
         dock=`<button class="big pri" id="nx">次の大会を始める（全員${START}枚）</button>`;
       }else dock=(out.length?`<div class="msg">${out.map(nm).join("・")} さんが脱落しました</div>`:"")+`<button class="big pri" id="nx">もう一局</button>`;
     }
@@ -768,20 +779,23 @@ function morph(a,b){ // 変わったところだけ差し替える（自分の�
 }
 function paint(g,h){
   if(h===lastH)return;lastH=h;const t=document.createElement("template");t.innerHTML=h;morph(g,t.content);
+  const stb=$("stb");if(stb)stb.onclick=stampSheet;
   const bd=$("bd");if(bd)bd.onclick=draw;const bk=$("bk");if(bk)bk.onclick=decide;
   const nx=$("nx");if(nx)nx.onclick=()=>{R++;send({t:"next",r:R});render()};
   const rs=$("rs");if(rs)rs.onclick=()=>{R++;send({t:"next",r:R});send({t:"reset",r:R});render()};
-  const sl=$("sl");if(sl){sl.oninput=()=>{local.amt=Number(sl.value);amtUI()};sl.onpointerdown=()=>dragging=true;sl.onpointerup=sl.onpointercancel=()=>{dragging=false}}
-  g.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{const sl=$("sl");local.amt=Math.max(Number(sl.min),Math.min(Number(sl.max),Math.round(Number(b.dataset.q)/10)*10||Number(sl.min)));if(Number(b.dataset.q)>=Number(sl.max))local.amt=Number(sl.max);lastH="";render()});
-  g.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{local.wait=R_(R).acts.length;send({t:"act",r:R,a:b.dataset.act,amt:local.amt||0});local.amt=null;render()});
+  const cr=$("cr");if(cr){const mn=Number(cr.dataset.min),mx=Number(cr.dataset.max);
+    cr.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{const add=Number(b.dataset.add);local.amt=Math.min(mx,(local.zero?0:local.amt)+add);if(local.amt<mn)local.amt=mn;local.zero=false;snd("call",.7);amtUI()});
+    $("clr").onclick=()=>{local.amt=mn;local.zero=true;snd("check",.5);amtUI()}}
+  g.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{const cr=$("cr");if(!cr)return;const mn=Number(cr.dataset.min),mx=Number(cr.dataset.max),q=Number(b.dataset.q);local.amt=q>=mx?mx:Math.max(mn,Math.min(mx,Math.round(q/10)*10||mn));local.zero=false;snd("raise",.7);amtUI()});
+  g.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{local.wait=R_(R).acts.length;send({t:"act",r:R,a:b.dataset.act,amt:local.amt||0});local.amt=null;local.zero=false;render()});
   g.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{R_(R).votes[myId]=b.dataset.v;send({t:"vote",r:R,for:b.dataset.v});render()});
 }
 let dragging=false;
-function amtUI(){ // スライダーを動かしている間は、数字だけ書き換える（画面は作り直さない）
-  const sl=$("sl"),ra=$("ra");if(!sl||!ra)return;const mn=Number(sl.min),mx=Number(sl.max),v=local.amt,all=v>=mx;
-  sl.style.setProperty("--p",(mx>mn?Math.round((v-mn)/(mx-mn)*100):100)+"%");
-  $("av").textContent=v+(all?"（オールイン）":"");
+function amtUI(){ // チップを足している間は、数字だけ書き換える（画面は作り直さない）
+  const cr=$("cr"),ra=$("ra");if(!cr||!ra)return;const mx=Number(cr.dataset.max),v=local.amt,all=v>=mx;
+  const av=$("av");av.textContent=v+(all?"（オールイン）":"");av.classList.remove("bump");void av.offsetWidth;av.classList.add("bump");
   ra.dataset.act=all?"allin":"raise";ra.innerHTML=(all?"オールイン":ra.dataset.lbl)+`<small>${all?mx:"+"+v}</small>`;
+  cr.querySelectorAll("[data-add]").forEach(b=>b.disabled=all);
 }
 
 const recent=[];
