@@ -282,7 +282,8 @@ function order(){ // 先に来た2人が対戦者、3人目が審判、4人目�
   if(fixedOrder.length===3){const rest=[...players.keys()].filter(i=>!fixedOrder.includes(i)).sort((a,b)=>players.get(a).first-players.get(b).first);return [...fixedOrder,...rest]}
   return [...players.entries()].filter(([,p])=>Date.now()/1000-p.last<3*3600).sort((a,b)=>a[1].first-b[1].first).map(x=>x[0]);
 }
-const seats=()=>order().slice(0,2),judgeId=()=>order()[2];
+const seats=()=>order().slice(0,2);
+const judgeId=()=>{const rest=order().slice(2);return rest.find(i=>online(i))||rest[0]}; // 審判が抜けたら、次にいる人が審判
 const online=id=>{const p=players.get(id);return p&&Date.now()/1000-p.last<40};
 
 async function draw(){
@@ -329,8 +330,9 @@ function outcome(r,s,j,st){
   const x=rounds[r];if(!x||!x.picks[s[0]]||!x.picks[s[1]])return null;
   const b=betState(r,s,st);if(!b.done)return null;
   if(b.fold){const w=s.find(i=>i!==b.fold);return{w,stake:b.stake,fold:true,how:esc(players.get(b.fold).name)+" さんがフォールド"}}
-  if(!j)return null;const v=x.votes[j];if(v!==s[0]&&v!==s[1])return null;
-  return{w:v,stake:b.stake,how:"審判 "+esc(players.get(j).name)+" さんの判定"};
+  let vid=j&&x.votes[j]?j:Object.keys(x.votes).find(k=>!s.includes(k)); // その戦で票を入れた審判（途中で交代しても残る）
+  if(!vid)return null;const v=x.votes[vid];if(v!==s[0]&&v!==s[1])return null;
+  return{w:v,stake:b.stake,how:"審判 "+esc((players.get(vid)||{}).name||"?")+" さんの判定"};
 }
 function history_(s,j){ // R戦の始まりまでのチップと勝ち数
   let st={[s[0]]:START,[s[1]]:START};const wins={};
