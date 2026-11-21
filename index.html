@@ -98,7 +98,7 @@ input::placeholder{color:#a99d93}
 @media(max-width:420px){.ingame .logo b{font-size:13px}.ingame .top{gap:5px;padding-left:10px;padding-right:10px}.ingame #topr{gap:4px!important}.ingame .icbtn{padding:0 7px;min-width:30px}}
 .sheetin{max-height:88dvh;overflow-y:auto}
 .theme{flex:none;align-self:center;display:flex;align-items:center;gap:8px;padding:3px 6px 3px 14px;border-radius:999px;background:var(--ink);color:var(--on);font-size:11.5px;font-weight:700}
-.theme b{font:400 17px/1.3 var(--fn);color:var(--gold)}.theme i{font-style:normal;font-size:10.5px;color:var(--ink);background:var(--on);border-radius:999px;padding:2px 8px}
+.theme b{font:400 17px/1.3 var(--fn);color:var(--gold)}.theme i.by{background:transparent;color:var(--on);opacity:.75;max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.theme i{font-style:normal;font-size:10.5px;color:var(--ink);background:var(--on);border-radius:999px;padding:2px 8px}
 .stgrid.th{grid-template-columns:repeat(2,minmax(0,1fr))}.stgrid.th .big{min-height:44px;font-size:14px}
 .tm{font-weight:900;color:var(--ink);white-space:nowrap}.tm.hot{color:var(--bg)}
 .tbl{flex:none;display:flex;justify-content:center;gap:6px}
@@ -288,7 +288,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22r"; // 新しい版を出したら変える
+const VER="2026-11-22s"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
@@ -560,7 +560,8 @@ const THEMES=["強そう","モテそう","高そう","賢そう"];
 const themeSet=[];
 function themeOf(r){let c={mode:"fixed",k:0};for(const t of themeSet)if(t.from<=r)c=t;
   if(c.mode==="rand"){let v=0;for(const ch of room+":"+r)v=(v*131+ch.charCodeAt(0))>>>0;return THEMES[v%THEMES.length]}return THEMES[c.k]||THEMES[0]}
-function themeSheet(){const d=document.createElement("div");d.className="sheet";
+const roomHost=()=>order().find(i=>!i.startsWith("ai-")&&!i.startsWith("cpu-")); // 部屋主：いま部屋にいる人のうち、いちばん先に入った人
+function themeSheet(){if(roomHost()!==myId){toast("お題を決められるのは部屋主（"+nm(roomHost())+"）だけです");return}const d=document.createElement("div");d.className="sheet";
   d.innerHTML=`<div class="sheetin"><b>お題を選ぶ</b><button class="big pri" data-th="rand">毎回ランダム</button><div class="stgrid th">${THEMES.map((t,i)=>`<button class="big sec" data-th="${i}">${t}</button>`).join("")}</div><button class="big ghost">閉じる</button></div>`;
   d.onclick=e=>{const b=e.target.closest("button");if(!b&&e.target!==d)return;if(b&&b.dataset.th!=null)send({t:"theme",r:R,mode:b.dataset.th==="rand"?"rand":"fixed",k:Number(b.dataset.th)||0});d.remove()};document.body.appendChild(d)}
 // ---- 持ち時間（賭けは30秒でチェックかフォールド、記事選びは90秒で自動決定） ----
@@ -614,7 +615,7 @@ function handle(m,time){
   p.name=String(m.name||"").slice(0,12);p.last=Math.max(p.last,time);if(m.role)p.role=String(m.role);players.set(m.id,p);
   const r=Number(m.r)||1;
   if(m.t==="chat"){addmsg(p.name,String(m.text||"").slice(0,200),m.id===myId);if(m.id.startsWith("ai-"))R_(r).reason=String(m.text||"").slice(0,200)}
-  else if(m.t==="theme"){const from=Object.keys(R_(r).picks).length?r+1:r,rand=m.mode==="rand",k=Math.max(0,Math.min(THEMES.length-1,Number(m.k)||0));themeSet.push({from,mode:rand?"rand":"fixed",k});sysmsg(p.name+" さんがお題を「"+(rand?"毎回ランダム":THEMES[k])+"」にしました"+(from>r?"（次の戦から）":""))}
+  else if(m.t==="theme"&&m.id===roomHost()){const from=Object.keys(R_(r).picks).length?r+1:r,rand=m.mode==="rand",k=Math.max(0,Math.min(THEMES.length-1,Number(m.k)||0));themeSet.push({from,mode:rand?"rand":"fixed",k});sysmsg(p.name+" さんがお題を「"+(rand?"毎回ランダム":THEMES[k])+"」にしました"+(from>r?"（次の戦から）":""))}
   else if(m.t==="stamp"){if(Date.now()/1000-time<10)showStamp(p.name,Number(m.k))}
   else if(m.t==="hello"||m.t==="draw"){R_(r).draws[m.id]=Math.max(R_(r).draws[m.id]||0,Number(m.draws)||0)}
   else if(m.t==="pick"&&m.a&&typeof m.a.title==="string"){R_(r).picks[m.id]=m.a;R_(r).draws[m.id]=Number(m.draws)||MAXDRAW}
@@ -751,7 +752,8 @@ function render(){
   }
   const H=history_(J),wins=H.wins,st=H.st;
   const TH=themeOf(R);
-  const cupTag=`<button class="theme" id="thb">お題<b>${TH}</b><i>変える</i></button><div class="cuprow"><div class="cup">第${H.cup}大会　残り${Object.keys(H.raw).length?Object.keys(H.raw).filter(i=>H.raw[i]>0).length:ro.length}人　参加料${anteOf[R]||ANTE}枚${anteUp[R]?"（アップ！）":""}</div><button class="stb" id="stb">スタンプ</button></div>`;
+  const host=roomHost();
+  const cupTag=`<button class="theme" id="thb">お題<b>${TH}</b>${host===myId?"<i>変える</i>":`<i class="by">部屋主 ${nm(host)}</i>`}</button><div class="cuprow"><div class="cup">第${H.cup}大会　残り${Object.keys(H.raw).length?Object.keys(H.raw).filter(i=>H.raw[i]>0).length:ro.length}人　参加料${anteOf[R]||ANTE}枚${anteUp[R]?"（アップ！）":""}</div><button class="stb" id="stb">スタンプ</button></div>`;
   const both=allPicked(R),B=both?betState(R,ro,st):null;
   const Z=B&&B.done?outcome(R,ro,J,st):null;
   if(B&&!B.done&&B.to){const key=R+":"+x.acts.length+":"+B.to;if(!TURN||TURN.key!==key)TURN={key,to:B.to,since:Date.now(),owe:B.H-B.c[B.to]>0,r:R,jit:4000+Math.random()*4000}}else TURN=null;
