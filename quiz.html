@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>どっちが強そう？｜ツヨペディア</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,-apple-system,"Hiragino Sans",sans-serif;background:#14171f;color:#f3f3f3;min-height:100vh;display:flex;flex-direction:column;align-items:center;touch-action:manipulation}
+header{width:100%;max-width:520px;padding:14px 16px 6px;display:flex;justify-content:space-between;align-items:center}
+h1{font-size:17px;margin:0}
+.bar{width:100%;max-width:520px;padding:0 16px}
+.bar div{height:6px;background:#2a2f3c;border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:#f5b83d;width:0}
+.n{font-size:13px;color:#aab}
+main{width:100%;max-width:520px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;flex:1}
+.q{text-align:center;font-size:15px;color:#ccd;margin:4px 0}
+.card{background:#232838;border:2px solid #343b50;border-radius:16px;padding:20px 16px;text-align:left;color:inherit;font:inherit;width:100%;cursor:pointer;min-height:110px}
+.card:active{border-color:#f5b83d;background:#2c3246}
+.card b{display:block;font-size:21px;margin-bottom:6px}
+.card span{font-size:14px;color:#b9bfd0;line-height:1.5}
+.vs{text-align:center;font-weight:700;color:#f5b83d}
+.row{display:flex;gap:10px}
+.sub{flex:1;background:none;border:1px solid #444b60;color:#ccd;border-radius:12px;padding:12px;font:inherit;font-size:14px}
+.done{text-align:center;padding:40px 10px;font-size:17px;line-height:1.8}
+</style></head><body>
+<header><h1>どっちが強そう？</h1><span class="n" id="n"></span></header>
+<div class="bar"><div><i id="bar"></i></div></div>
+<main id="m"></main>
+<script>
+{
+const RELAY="https://bocch.9zwb7cg864.workers.dev/tsyoi-quiz";
+const C=[
+["fighter","魔裟斗","日本の元キックボクサー。K-1 WORLD MAXの王者。"],
+["samurai","本多忠勝","戦国時代の武将。徳川四天王の一人。"],
+["leader","ナポレオン・ボナパルト","フランスの軍人で、のちに皇帝となった。"],
+["localpol","鈴木一郎 (市議会議員)","地方の市議会議員。政党の支部長も務める。"],
+["celeb","コニー・セレッカ","アメリカの女優・元モデル。"],
+["scholar","高橋さきの","日本の翻訳者、評論家。大学の非常勤講師。"],
+["country","ブラジル","南アメリカの連邦共和国。人口は約2億人。"],
+["city","大阪市","大阪府の府庁所在地。人口は約280万人。"],
+["town","白老町","北海道の町。人口は約1万6千人。"],
+["company","トヨタ自動車","日本最大の自動車メーカー。"],
+["military","アメリカ海兵隊","アメリカ軍の一つ。上陸作戦などを担う。"],
+["school","山形県立加茂水産高等学校","山形県の公立の水産高校。"],
+["planet","木星","太陽系でいちばん大きい惑星。"],
+["quake","推古地震","599年に奈良で起きたとされる地震。"],
+["river","和知野川","長野県を流れる天竜川水系の一級河川。"],
+["animal","ヒグマ","北半球に住む大型のクマ。"],
+["plant","グラジオラス","アヤメ科の植物。夏に花が咲く。"],
+["weapon","戦闘機","空中戦をするための軍用機。"],
+["building","要塞","敵の攻撃を防ぐための軍事施設。"],
+["war","第二次世界大戦","1939年から1945年まで続いた世界規模の戦争。"],
+["song","雫 (藍坊主の曲)","日本のロックバンド藍坊主のシングル曲。"],
+["concept","現実逃避","つらい現実から目をそらす心の状態。"],
+["food","つぼ汁","福岡県の郷土料理。具だくさんの汁物。"],
+["disease","ペスト","ペスト菌による感染症。中世ヨーロッパで大流行した。"]
+];
+const st=(()=>{try{return localStorage}catch(e){return null}})();
+const get=k=>{try{return st&&st.getItem(k)}catch(e){return null}},set=(k,v)=>{try{st&&st.setItem(k,v)}catch(e){}};
+let uid=get("tsyq-id");if(!uid){uid="u"+Math.random().toString(36).slice(2,8);set("tsyq-id",uid)}
+// 全組み合わせ。並び順と左右は端末ごとに固定のランダム
+let order=JSON.parse(get("tsyq-ord")||"null");
+if(!order||order.length!==C.length*(C.length-1)/2){order=[];for(let i=0;i<C.length;i++)for(let j=i+1;j<C.length;j++)order.push(Math.random()<.5?[i,j]:[j,i]);
+  for(let i=order.length-1;i>0;i--){const k=Math.floor(Math.random()*(i+1));[order[i],order[k]]=[order[k],order[i]]}set("tsyq-ord",JSON.stringify(order))}
+let pos=+(get("tsyq-pos")||0);
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const m=document.getElementById("m");
+function show(){
+  document.getElementById("n").textContent=Math.min(pos,order.length)+" / "+order.length;
+  document.getElementById("bar").style.width=(pos/order.length*100)+"%";
+  if(pos>=order.length){m.innerHTML='<div class="done">全部おわりました。<br>ありがとうございます。</div>';return}
+  const [a,b]=order[pos];
+  m.innerHTML=`<div class="q">パッと見て、強そうなのはどっち？</div>
+  <button class="card" data-w="a"><b>${esc(C[a][1])}</b><span>${esc(C[a][2])}</span></button>
+  <div class="vs">VS</div>
+  <button class="card" data-w="b"><b>${esc(C[b][1])}</b><span>${esc(C[b][2])}</span></button>
+  <div class="row"><button class="sub" data-w="=">同じくらい</button><button class="sub" data-w="back">1つ戻る</button></div>`;
+  m.querySelectorAll("button").forEach(x=>x.onclick=()=>pick(x.dataset.w));
+}
+function pick(w){
+  if(w==="back"){if(pos>0){pos--;set("tsyq-pos",pos);show()}return}
+  const [a,b]=order[pos];
+  const win=w==="a"?C[a][0]:w==="b"?C[b][0]:"=";
+  fetch(RELAY,{method:"POST",body:JSON.stringify({t:"q",id:uid,i:pos,l:C[a][0],r:C[b][0],w:win,at:Date.now()})}).catch(()=>{});
+  pos++;set("tsyq-pos",pos);show();
+}
+show();
+}
+</script></body></html>
