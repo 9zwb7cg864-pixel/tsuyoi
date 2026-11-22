@@ -288,11 +288,11 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </div>
 <script>
 {
-const VER="2026-11-22u"; // 新しい版を出したら変える
+const VER="2026-11-22v"; // 新しい版を出したら変える
 const RELAY="https://bocch.9zwb7cg864.workers.dev/";
 setInterval(async()=>{ // 新しい版が出ていたら知らせる（古い画面のまま遊ばないように）
   try{const t=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text());
-    if(!t.includes('const VER="'+VER+'"')&&!document.getElementById("upd")){const d=document.createElement("button");d.id="upd";d.className="upd";d.textContent="新しい版があります。タップで更新";d.onclick=()=>location.reload();document.body.appendChild(d)}}catch(e){}
+    if(!t.includes('const VER="2026-11-22v"')&&!document.getElementById("upd")){const d=document.createElement("button");d.id="upd";d.className="upd";d.textContent="新しい版があります。タップで更新";d.onclick=()=>location.reload();document.body.appendChild(d)}}catch(e){}
 },60000);
 const API="https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=random&grnnamespace=0&grnlimit=1&prop=extracts|pageimages|info&exintro=1&explaintext=1&exsentences=3&piprop=thumbnail&pithumbsize=480&inprop=url";
 const MAXDRAW=11; // 最初の1回＋引き直し10回
@@ -454,12 +454,18 @@ async function aiJudge(ord,picks){ // 持ち主の端末でGeminiに判定して
   const key=R+":"+ord.join();if(aiRunning===key)return;aiRunning=key;
   const r0=R;await new Promise(r=>setTimeout(r,4000+ord.length*600)); // 記事が出てから少し間を置く（みんなが見比べる時間）
   if(R!==r0||R_(R).votes[AI_ID]){aiRunning=null;return}
-  const items=ord.map(i=>({title:(picks[i]||{}).title,extract:(picks[i]||{}).ext}));
-  try{
+  const ask=async o=>{ // 並べ順oで1回判定 → 勝った人のidと理由
+    const items=o.map(i=>({title:(picks[i]||{}).title,extract:(picks[i]||{}).ext}));
     const res=await fetch(JUDGE_URL,{method:"POST",body:JSON.stringify({token:store.get("tsy-owner"),items,theme:themeOf(R)})});
-    const d=await res.json().catch(()=>({}));
-    if(!res.ok){toast(d.error==="limit"?"AI審判は今日の分が終わりました":"AI審判がうまく動きませんでした");setAi(false);return}
-    const k=LAB.indexOf(String(d.winner||"").trim().toUpperCase()),w=ord[k>=0&&k<ord.length?k:0];
+    const d=await res.json().catch(()=>({}));if(!res.ok)throw d.error||"ng";
+    const k=LAB.indexOf(String(d.winner||"").trim().toUpperCase());return {w:o[k>=0&&k<o.length?k:0],reason:d.reason}};
+  try{
+    // 先に出た記事が勝ちやすいクセがあるので、正順と逆順で聞く。割れたらもう1往復して多数決、それでも同数ならランダム
+    const pair=()=>Promise.all([ask(ord),ask(ord.slice().reverse())]);
+    let all=await pair();if(all[0].w!==all[1].w)all=all.concat(await pair());
+    const cnt={};all.forEach(x=>cnt[x.w]=(cnt[x.w]||0)+1);const top=Math.max(...Object.values(cnt));
+    const best=all.filter(x=>cnt[x.w]===top),win=best[Math.floor(Math.random()*best.length)];
+    const w=win.w,d={reason:win.reason};
     R_(R).votes[AI_ID]=w;await sendAs({t:"vote",r:R,for:w});sendAs({t:"chat",r:R,text:d.reason});render();
   }catch(e){toast("AI審判に接続できませんでした");setAi(false)}
   finally{aiRunning=null}
